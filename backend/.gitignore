@@ -1,0 +1,41 @@
+# Ignore virtual environment
+/venv/
+
+# Ignore Python bytecode files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Ignore environment configuration files
+.env
+.env.*
+
+# Ignore Flask migrations (if you are using Flask-Migrate)
+migrations/
+
+# Ignore database files (for SQLite or others)
+*.sqlite3
+*.db
+
+# Ignore log files
+*.log
+
+# Ignore coverage reports from testing
+.coverage
+
+# Ignore IDE/editor-specific files (e.g., VS Code, PyCharm)
+.vscode/
+.idea/
+
+# Ignore dependency cache files
+*.egg-info/
+*.dist-info/
+
+# Ignore package distribution files
+*.tar.gz
+*.whl
+
+# Ignore all files created during Docker build (if applicable)
+Dockerfile*
+docker-compose.yml
