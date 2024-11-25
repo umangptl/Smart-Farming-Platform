@@ -28,7 +28,7 @@ class Livestock(db.Model):
     gender = db.Column(db.Enum(GenderEnum), nullable=False)  # Gender as enum
     livestock_name = db.Column(db.String(45), nullable=True)  # Name of the livestock
     weight = db.Column(db.Integer, nullable=True)  # Weight in integers
-    paddockID = db.Column(db.Integer, db.ForeignKey('paddock.paddlockID'), nullable=False)  # Foreign key to paddock table
+    paddockID = db.Column(db.Integer, db.ForeignKey('paddock.paddockID'), nullable=False)  # Foreign key to paddock table
 
     # Define a method to convert the model instance to a dictionary
     def to_dict(self):
