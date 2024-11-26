@@ -1,38 +1,104 @@
 from flask import Blueprint, jsonify, request
 from app.utils.db_util import db
+from datetime import datetime
 
 task_bp = Blueprint('tasks', __name__)
 
 class Task(db.Model):
     __tablename__ = 'Tasks'
+
     id = db.Column(db.Integer, primary_key=True)
-    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
-    dummy = db.Column(db.Text, nullable=False)
+    title = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    due_date = db.Column(db.DateTime, nullable=True)
+    status = db.Column(db.String(50), nullable=False, default="Pending")
+    priority = db.Column(db.String(50), nullable=True)
+    assigned_to = db.Column(db.Integer, db.ForeignKey('Users.id'), nullable=True)
 
     def to_dict(self):
         return {
             "id": self.id,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "dummy": self.dummy
+            "title": self.title,
+            "description": self.description,
+            "due_date": self.due_date.isoformat() if self.due_date else None,
+            "status": self.status,
+            "priority": self.priority,
+            "assigned_to": self.assigned_to
         }
-
 
 @task_bp.route('/tasks', methods=['GET'])
 def get_tasks():
     try:
-        tasks = Task.query.all()  # Query all tasks
-        return jsonify([task.to_dict() for task in tasks])  # Convert tasks to JSON
+        tasks = Task.query.all()
+        return jsonify([task.to_dict() for task in tasks])
     except Exception as e:
         return jsonify({"error": f"Failed to fetch tasks: {str(e)}"}), 500
-
 
 @task_bp.route('/tasks', methods=['POST'])
 def create_task():
     try:
         data = request.json
-        new_task = Task(dummy=data.get('dummy'))
+        new_task = Task(
+            title=data.get('title'),
+            description=data.get('description'),
+            due_date=datetime.fromisoformat(data.get('due_date')) if data.get('due_date') else None,
+            status=data.get('status', 'Pending'),
+            priority=data.get('priority'),
+            assigned_to=data.get('assigned_to')
+        )
         db.session.add(new_task)
         db.session.commit()
         return jsonify(new_task.to_dict()), 201
     except Exception as e:
         return jsonify({"error": f"Failed to create task: {str(e)}"}), 500
+
+@task_bp.route('/tasks/<int:task_id>', methods=['GET'])
+def get_task(task_id):
+    try:
+        task = Task.query.get(task_id)
+        if not task:
+            return jsonify({"error": "Task not found"}), 404
+        return jsonify(task.to_dict())
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch task: {str(e)}"}), 500
+
+@task_bp.route('/tasks/<int:task_id>', methods=['PUT'])
+def update_task(task_id):
+    try:
+        task = Task.query.get(task_id)
+        if not task:
+            return jsonify({"error": "Task not found"}), 404
+
+        data = request.json
+        task.title = data.get('title', task.title)
+        task.description = data.get('description', task.description)
+        task.due_date = datetime.fromisoformat(data.get('due_date')) if data.get('due_date') else task.due_date
+        task.status = data.get('status', task.status)
+        task.priority = data.get('priority', task.priority)
+        task.assigned_to = data.get('assigned_to', task.assigned_to)
+
+        db.session.commit()
+        return jsonify(task.to_dict())
+    except Exception as e:
+        return jsonify({"error": f"Failed to update task: {str(e)}"}), 500
+
+@task_bp.route('/tasks/<int:task_id>', methods=['DELETE'])
+def delete_task(task_id):
+    try:
+        task = Task.query.get(task_id)
+        if not task:
+            return jsonify({"error": "Task not found"}), 404
+
+        db.session.delete(task)
+        db.session.commit()
+        return jsonify({"message": "Task deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to delete task: {str(e)}"}), 500
+
+@task_bp.route('/tasks/users/<int:user_id>', methods=['GET'])
+def get_user_tasks(user_id):
+    try:
+        tasks = Task.query.filter_by(assigned_to=user_id).all()
+        return jsonify([task.to_dict() for task in tasks])
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch tasks for user {user_id}: {str(e)}"}), 500
