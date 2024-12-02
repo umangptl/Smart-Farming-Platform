@@ -1,10 +1,14 @@
-from app.utils.db_util import configure_db
+from app.utils.db_util import configure_db, db
 from app import create_app
 from app.routes.task_routes import task_bp
 from app.routes.weather_route import weather_bp
 
 app = create_app()
 configure_db(app)
+
+@app.before_request
+def create_tables():
+    db.create_all()
 
 app.register_blueprint(task_bp)
 app.register_blueprint(weather_bp)
