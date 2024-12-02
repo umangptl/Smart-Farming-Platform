@@ -7,7 +7,7 @@ def create_app():
     app.config.from_pyfile('config.py')  # Load configuration settings
 
     # Enable CORS for all domains (you can restrict this later)
-    CORS(app)
+    CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
     # Import and register the Blueprint
     from .routes.example_route import main_routes  # Correct import
