@@ -1,10 +1,15 @@
 from flask import Flask
 from flask_cors import CORS
 from app.utils.db_util import configure_db
-from app.routes.task_routes import task_bp
-from app.routes.livestock_routes import livestock_bp
-from app.routes.location_routes import location_bp
-from app.routes.paddock_routes import paddock_bp
+from .routes.task_routes import task_bp
+from .routes.livestock_routes import livestock_bp
+from .routes.location_routes import location_bp
+from .routes.paddock_routes import paddock_bp
+from .routes.example_route import main_routes
+from .routes.task_routes import task_bp
+from .routes.user_routes import user_bp
+from .routes.weather_route import weather_bp
+
 
 def create_app():
     # Initialize the Flask app
@@ -12,8 +17,8 @@ def create_app():
     app.config.from_pyfile('config.py')  # Load configuration settings
 
     # Enable CORS for all domains (you can restrict this later)
-    CORS(app)
-
+    CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+    
     # Configure the database
     configure_db(app)
 
@@ -23,4 +28,10 @@ def create_app():
     app.register_blueprint(paddock_bp)
     app.register_blueprint(livestock_bp)
 
+    # Import and register the Blueprint
+    app.register_blueprint(main_routes)
+    app.register_blueprint(task_bp)
+    app.register_blueprint(user_bp)
+    app.register_blueprint(weather_bp)
+    
     return app
