@@ -1,4 +1,4 @@
-name: light-bootstrap-dashboard-react
+name: frontend
 region: us-east-1
 frontend:
   # Specifies the path of your code.

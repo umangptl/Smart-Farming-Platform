@@ -18,19 +18,13 @@ def create_app():
 
     # Enable CORS for all domains (you can restrict this later)
     CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
-    
-    # Configure the database
-    configure_db(app)
 
     # Register Blueprints
     app.register_blueprint(task_bp)
     app.register_blueprint(location_bp)
     app.register_blueprint(paddock_bp)
     app.register_blueprint(livestock_bp)
-
-    # Import and register the Blueprint
     app.register_blueprint(main_routes)
-    app.register_blueprint(task_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(weather_bp)
     
