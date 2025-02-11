@@ -3,10 +3,10 @@ import enum
 
 # Enum for grass type
 class GrassTypeEnum(enum.Enum):
-    ryegrass = 1
-    bermudagrass = 2
-    fescue = 3
-    clover = 4
+    ryegrass = "ryegrass"
+    bermudagrass = "bermudagrass"
+    fescue = "fescue"
+    clover = "clover"
 
 class Paddock(db.Model):
     __tablename__ = 'paddock'
