@@ -13,7 +13,7 @@ weather_bp = Blueprint('weather', __name__)
 # Fetch the API key from the environment
 API_KEY = os.getenv('OPENWEATHER_API_KEY')
 BASE_URL = 'https://api.openweathermap.org/data/2.5/weather'
-TEMPERATURE_MAP_URL = "https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=" + API_KEY
+TEMPERATURE_MAP_URL = "https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=" + str(API_KEY)
 FORECAST_BASE_URL = 'https://api.openweathermap.org/data/2.5/forecast'
 
 def map_icon(icon):

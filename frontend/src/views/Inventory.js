@@ -1,9 +1,31 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+// import { FaCheckCircle } from "react-icons/fa";
+// import { MdSick } from "react-icons/md";
 
 // react-bootstrap components
 import { Card, Table, Container, Row, Col } from "react-bootstrap";
+import useLivestock from "hooks/useLivestock";
 
 function TableList() {
+  // console.log("FaCheckCircle:", FaCheckCircle);
+  // console.log("MdSick:", MdSick);
+  const {livestock, loading, error} = useLivestock([]);
+  
+  // Function to calculate age based on Date of Birth
+  const calculateAge = (dob) => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    // Adjust age if birthday hasn't happened yet this year
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
   return (
     <>
       <Container fluid>
@@ -11,7 +33,7 @@ function TableList() {
           <Col md="12">
             <Card className="strpied-tabled-with-hover">
               <Card.Header>
-                <Card.Title as="h4">Table data</Card.Title>
+                <Card.Title as="h4">Livestock Inventory</Card.Title>
                 <p className="card-category">
                   Here is a subtitle for this table
                 </p>
@@ -23,53 +45,22 @@ function TableList() {
                       <th className="border-0">ID</th>
                       <th className="border-0">Animal</th>
                       <th className="border-0">Breed</th>
-                      <th className="border-0">Birthdate</th>
-                      <th className="border-0">Price</th>
+                      <th className="border-0">Age</th>
+                      <th className="border-0">Weight</th>
+                      <th className="border-0">Health Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>1</td>
-                      <td>Goat</td>
-                      <td>Alphine</td>
-                      <td>06/07/2015</td>
-                      <td>$950</td>
-                    </tr>
-                    <tr>
-                      <td>2</td>
-                      <td>Goat</td>
-                      <td>Faining</td>
-                      <td>12/12/2020</td>
-                      <td>$490</td>
-                    </tr>
-                    <tr>
-                      <td>3</td>
-                      <td>Cow</td>
-                      <td>Brown Swiss</td>
-                      <td>10/15/2019</td>
-                      <td>$2400</td>
-                    </tr>
-                    <tr>
-                      <td>4</td>
-                      <td>Cow</td>
-                      <td>Beefalo</td>
-                      <td>10/02/2015</td>
-                      <td>$4000</td>
-                    </tr>
-                    <tr>
-                      <td>5</td>
-                      <td>Cow</td>
-                      <td>Red Angus</td>
-                      <td>02/15/2017</td>
-                      <td>$2300</td>
-                    </tr>
-                    <tr>
-                      <td>6</td>
-                      <td>Chicken</td>
-                      <td>Sussex</td>
-                      <td>03/18/2017</td>
-                      <td>$400</td>
-                    </tr>
+                    {livestock.map((animal) => (
+                      <tr key={animal.livestockID}>
+                        <td>{animal.livestockID}</td>
+                        <td>{animal.type}</td>
+                        <td>{animal.breed}</td>
+                        <td>{calculateAge(animal.dob)} years</td>
+                        <td>{animal.weight}</td>
+                        <td>{animal.health_status ? "Ok" : "Sick"}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </Table>
               </Card.Body>
