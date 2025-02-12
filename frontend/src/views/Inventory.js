@@ -1,10 +1,12 @@
-import { Card, Container, Row, Col, ProgressBar } from "react-bootstrap";
+import { Card, Container, Row, Col, ProgressBar, Alert } from "react-bootstrap";
 import TwoColumnGrid from "components/Inventory_page/TwoColumnGrid";
 import useLivestock from "hooks/useLivestock";
 import { FaCalendarAlt, FaMoneyBillWave, FaVenusMars, FaBirthdayCake, FaHorse, } from "react-icons/fa";
 import { FaCow } from "react-icons/fa6"
 import { GiBullHorns, GiSheep } from "react-icons/gi";
 import { MdHealthAndSafety } from "react-icons/md";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 function TableList() {
   const {livestock, loading, error} = useLivestock([]);
@@ -42,42 +44,95 @@ function TableList() {
 
   return (
     <Container fluid>
+    {/* Error Message */}
+    {error && (
+      <Alert variant="danger" className="mt-3">
+        Failed to load livestock data. Please try again later.
+      </Alert>
+    )}
       <Row>
-        {livestock.map((animal) => (
-          <Col key={animal.livestockID} md={4} sm={6} className="mb-2">
-            <Card className="shadow-sm">
-              <Card.Body className="px-0">
-                <div className="d-flex justify-content-between align-items-center mb-3 px-3">
-                  <div className="d-flex align-items-center">
-                    <div size={24} className="mr-2 text-success">{livestockIconMap[animal.type]}</div>
-                    <h5 className="mb-0">{animal.type.toUpperCase()}</h5>
-                  </div>
-                  <h5 className="mb-0">{animal.livestockID}</h5>
-                </div>
-                <TwoColumnGrid
-                  data={[
-                    { icon: <FaCalendarAlt />, label: "Purchase Date", value: formatDate(animal.purchase_date) },
-                    { icon: <FaMoneyBillWave />, label: "Purchase Price", value: `$${animal.purchase_price}` },
-                    { icon: <FaBirthdayCake />, label: "Age", value: calculateAgeString(animal.dob) },
-                    { icon: <FaVenusMars />, label: "Gender", value: animal.gender },
-                    { icon: <GiBullHorns />, label: "Breed", value: animal.breed },
-                    { icon: <FaCow />, label: "Breeding Status", value: animal.breeding_status }
-                  ]}
-                />
-                <div className="mt-3 px-3">
-                  <MdHealthAndSafety /> <strong>Health Status:</strong>
-                  <ProgressBar now={animal.health_status === 'healthy' ? 100 : animal.health_status === 'improving' ? 60 : animal.health_status === 'poor' ? 30 : 10} variant={animal.health_status === 'healthy' ? 'success' : animal.health_status === 'improving' ? 'warning' : 'danger'} />
-                  <div className="d-flex justify-content-between">
-                    <span>Bad</span>
-                    <span>Poor</span>
-                    <span>Improving</span>
-                    <span>Healthy</span>
-                  </div>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
+        {/* Skeleton Loader while loading */}
+        {loading
+          ? [...Array(6)].map((_, index) => (
+              <Col key={index} md={4} sm={6} className="mb-2">
+                <Card className="shadow-sm">
+                  <Card.Body className="px-0">
+                    <div className="px-3">
+                      <Skeleton height={20} width={150} />
+                      <Skeleton height={15} width={100} />
+                    </div>
+                    <TwoColumnGrid
+                      data={[
+                        { icon: <FaCalendarAlt />, label: "Purchase Date", value: <Skeleton width={100} /> },
+                        { icon: <FaMoneyBillWave />, label: "Purchase Price", value: <Skeleton width={80} /> },
+                        { icon: <FaBirthdayCake />, label: "Age", value: <Skeleton width={50} /> },
+                        { icon: <FaVenusMars />, label: "Gender", value: <Skeleton width={60} /> },
+                        { icon: <GiBullHorns />, label: "Breed", value: <Skeleton width={80} /> },
+                        { icon: <FaCow />, label: "Breeding Status", value: <Skeleton width={120} /> },
+                      ]}
+                    />
+                    <div className="mt-3 px-3">
+                      <MdHealthAndSafety /> <strong>Health Status:</strong>
+                      <Skeleton height={10} width={"100%"} />
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))
+          : livestock.map((animal) => (
+              <Col key={animal.livestockID} md={4} sm={6} className="mb-2">
+                <Card className="shadow-sm">
+                  <Card.Body className="px-0">
+                    <div className="d-flex justify-content-between align-items-center mb-3 px-3">
+                      <div className="d-flex align-items-center">
+                        <div size={24} className="mr-2 text-success">
+                          {livestockIconMap[animal.type]}
+                        </div>
+                        <h5 className="mb-0">{animal.type.toUpperCase()}</h5>
+                      </div>
+                      <h5 className="mb-0">{animal.livestockID}</h5>
+                    </div>
+                    <TwoColumnGrid
+                      data={[
+                        { icon: <FaCalendarAlt />, label: "Purchase Date", value: formatDate(animal.purchase_date) },
+                        { icon: <FaMoneyBillWave />, label: "Purchase Price", value: `$${animal.purchase_price}` },
+                        { icon: <FaBirthdayCake />, label: "Age", value: calculateAgeString(animal.dob) },
+                        { icon: <FaVenusMars />, label: "Gender", value: animal.gender },
+                        { icon: <GiBullHorns />, label: "Breed", value: animal.breed },
+                        { icon: <FaCow />, label: "Breeding Status", value: animal.breeding_status },
+                      ]}
+                    />
+                    <div className="mt-3 px-3">
+                      <MdHealthAndSafety /> <strong>Health Status:</strong>
+                      <ProgressBar
+                        now={
+                          animal.health_status === "healthy"
+                            ? 100
+                            : animal.health_status === "improving"
+                            ? 60
+                            : animal.health_status === "poor"
+                            ? 30
+                            : 10
+                        }
+                        variant={
+                          animal.health_status === "healthy"
+                            ? "success"
+                            : animal.health_status === "improving"
+                            ? "warning"
+                            : "danger"
+                        }
+                      />
+                      <div className="d-flex justify-content-between">
+                        <span>Bad</span>
+                        <span>Poor</span>
+                        <span>Improving</span>
+                        <span>Healthy</span>
+                      </div>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
       </Row>
     </Container>
   );
