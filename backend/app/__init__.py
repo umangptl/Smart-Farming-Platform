@@ -14,7 +14,7 @@ from .routes.weather_route import weather_bp
 def create_app():
     # Initialize the Flask app
     app = Flask(__name__)
-    app.config.from_pyfile('config.py')  # Load configuration settings
+    configure_db(app)
 
     # Enable CORS for all domains (you can restrict this later)
     CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})

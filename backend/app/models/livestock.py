@@ -15,6 +15,20 @@ class LivestockTypeEnum(enum.Enum):
     cattle = "cattle"
     horse = "horse"
     sheep = "sheep"
+    
+# Define Enum for Health Status
+class HealthStatusEnum(enum.Enum):
+    bad = "bad"
+    poor = "poor"
+    improving = "improving"
+    healthy = "healthy"
+    
+    # Define Enum for Health Status
+class BreedingStatusEnum(enum.Enum):
+    heifer = "heifer"
+    open = "open"
+    pregnant = "pregnant"
+    
 
 # Define the Livestock model
 class Livestock(db.Model):
@@ -24,10 +38,13 @@ class Livestock(db.Model):
     type = db.Column(db.Enum(LivestockTypeEnum), nullable=False)  # Livestock type as enum
     breed = db.Column(db.String(45), nullable=False)  # Breed of livestock
     dob = db.Column(db.Date, nullable=False)  # Date of birth
-    health_status = db.Column(db.Boolean, nullable=False)  # Health status (True/False)
+    purchase_price = db.Column(db.Integer, nullable=False) # Price of purchase
+    purchase_date = db.Column(db.Date, nullable=False)
+    health_status = db.Column(db.Enum(HealthStatusEnum), nullable=False)  # Health status (True/False)
+    breeding_status = db.Column(db.Enum(BreedingStatusEnum), nullable=False)
     gender = db.Column(db.Enum(GenderEnum), nullable=False)  # Gender as enum
     livestock_name = db.Column(db.String(45), nullable=True)  # Name of the livestock
-    weight = db.Column(db.Integer, nullable=True)  # Weight in integers
+    weight = db.Column(db.Integer, nullable=False)  # Weight in integers
     paddockID = db.Column(db.Integer, db.ForeignKey('paddock.paddockID'), nullable=False)  # Foreign key to paddock table
 
     # Define a method to convert the model instance to a dictionary
@@ -37,7 +54,10 @@ class Livestock(db.Model):
             "type": self.type.value if self.type else None,  # Convert enum to string
             "breed": self.breed,
             "dob": self.dob.isoformat() if self.dob else None,
-            "health_status": self.health_status,
+            "purchase_price": self.purchase_price,
+            "purchase_date": self.purchase_date.isoformat() if self.purchase_date else None,
+            "health_status": self.health_status.value if self.health_status else None,
+            "breeding_status": self.breeding_status.value if self.breeding_status else None,  # Convert enum to string
             "gender": self.gender.value if self.gender else None,  # Convert enum to string
             "livestock_name": self.livestock_name,
             "weight": self.weight,

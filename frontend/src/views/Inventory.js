@@ -3,26 +3,36 @@ import TwoColumnGrid from "components/Inventory_page/TwoColumnGrid";
 import useLivestock from "hooks/useLivestock";
 import { FaCalendarAlt, FaMoneyBillWave, FaVenusMars, FaBirthdayCake, FaHorse, } from "react-icons/fa";
 import { FaCow } from "react-icons/fa6"
-import { GiCow, GiBullHorns, GiSheep } from "react-icons/gi";
+import { GiBullHorns, GiSheep } from "react-icons/gi";
 import { MdHealthAndSafety } from "react-icons/md";
 
 function TableList() {
   const {livestock, loading, error} = useLivestock([]);
   
   // Function to calculate age based on Date of Birth
-  const calculateAge = (dob) => {
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-
-    // Adjust age if birthday hasn't happened yet this year
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
+  const calculateAgeString = (birth_date) => {
+    const dob = new Date(birth_date)
+    const now = new Date();
+    const days = Math.floor((now - dob) / (1000 * 60 * 60 * 24))
     
-    return age;
+    if (days < 7) {
+      return `${days} day${days !== 1 ? 's' : 's'}`
+    }
+
+    const weeks = Math.floor(days / 7);
+    if (days < 365) {
+      return `${weeks} week${weeks !== 1 ? 's' : ''}`
+    }
+
+    const years = days / 365.25;
+    return `${years.toFixed(1)} year${years !== 1 ? 's' : ''}`
+
   };
+
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
   const livestockIconMap = {
     "cattle": <FaCow size={24}/>,
@@ -46,9 +56,9 @@ function TableList() {
                 </div>
                 <TwoColumnGrid
                   data={[
+                    { icon: <FaCalendarAlt />, label: "Purchase Date", value: formatDate(animal.purchase_date) },
                     { icon: <FaMoneyBillWave />, label: "Purchase Price", value: `$${animal.purchase_price}` },
-                    { icon: <FaCalendarAlt />, label: "Purchase Date", value: new Date(animal.purchase_date).toDateString() },
-                    { icon: <FaBirthdayCake />, label: "Age", value: `${animal.age} Days` },
+                    { icon: <FaBirthdayCake />, label: "Age", value: calculateAgeString(animal.dob) },
                     { icon: <FaVenusMars />, label: "Gender", value: animal.gender },
                     { icon: <GiBullHorns />, label: "Breed", value: animal.breed },
                     { icon: <FaCow />, label: "Breeding Status", value: animal.breeding_status }
@@ -56,7 +66,7 @@ function TableList() {
                 />
                 <div className="mt-3 px-3">
                   <MdHealthAndSafety /> <strong>Health Status:</strong>
-                  <ProgressBar now={animal.health_status === 'Healthy' ? 100 : animal.health_status === 'Improving' ? 75 : animal.health_status === 'Poor' ? 50 : 25} variant={animal.health_status === 'Healthy' ? 'success' : animal.health_status === 'Improving' ? 'warning' : 'danger'} />
+                  <ProgressBar now={animal.health_status === 'healthy' ? 100 : animal.health_status === 'improving' ? 60 : animal.health_status === 'poor' ? 30 : 10} variant={animal.health_status === 'healthy' ? 'success' : animal.health_status === 'improving' ? 'warning' : 'danger'} />
                   <div className="d-flex justify-content-between">
                     <span>Bad</span>
                     <span>Poor</span>
