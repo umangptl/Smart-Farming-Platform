@@ -1,14 +1,11 @@
-import React, { useEffect, useState } from "react";
-// import { FaCheckCircle } from "react-icons/fa";
-// import { MdSick } from "react-icons/md";
+import { FaCheckCircle } from "react-icons/fa";
+import { MdSick } from "react-icons/md";
 
 // react-bootstrap components
 import { Card, Table, Container, Row, Col } from "react-bootstrap";
 import useLivestock from "hooks/useLivestock";
 
 function TableList() {
-  // console.log("FaCheckCircle:", FaCheckCircle);
-  // console.log("MdSick:", MdSick);
   const {livestock, loading, error} = useLivestock([]);
   
   // Function to calculate age based on Date of Birth
@@ -58,7 +55,7 @@ function TableList() {
                         <td>{animal.breed}</td>
                         <td>{calculateAge(animal.dob)} years</td>
                         <td>{animal.weight}</td>
-                        <td>{animal.health_status ? "Ok" : "Sick"}</td>
+                        <td>{animal.health_status ? <FaCheckCircle/> : <MdSick/> }</td>
                       </tr>
                     ))}
                   </tbody>
