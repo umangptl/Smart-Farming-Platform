@@ -32,7 +32,7 @@ function Dashboard() {
                       <p className="card-category" style={{ color: "black" }}>
                         Temparature
                       </p>
-                      <Card.Title as="h4">65°F</Card.Title>
+                      <Card.Title as="h4">58°F</Card.Title>
                     </div>
                   </Col>
                 </Row>
@@ -66,7 +66,7 @@ function Dashboard() {
                       <p className="card-category" style={{ color: "black" }}>
                         Tasks
                       </p>
-                      <Card.Title as="h4">16/60</Card.Title>
+                      <Card.Title as="h4">2/10</Card.Title>
                     </div>
                   </Col>
                 </Row>
@@ -100,7 +100,7 @@ function Dashboard() {
                       <p className="card-category" style={{ color: "black" }}>
                         Total livestock
                       </p>
-                      <Card.Title as="h4">269</Card.Title>
+                      <Card.Title as="h4">1440</Card.Title>
                     </div>
                   </Col>
                 </Row>
@@ -134,7 +134,7 @@ function Dashboard() {
                       <p className="card-category" style={{ color: "black" }}>
                         Active Cameras
                       </p>
-                      <Card.Title as="h4">+5</Card.Title>
+                      <Card.Title as="h4">+6</Card.Title>
                     </div>
                   </Col>
                 </Row>
@@ -147,69 +147,25 @@ function Dashboard() {
           </Col>
         </Row>
         <Row>
-          <Col md="6">
-            <Card>
-              <Card.Header>
-                <Card.Title as="h4">Main Camera 1</Card.Title>
-                <p className="card-category">Location (Name)</p>
-              </Card.Header>
-              <Card.Body>
-                <img
-                  src={require("assets/img/main1.png")}
-                  alt="..."
-                  style={{ width: "525px", height: "250px" }}
-                />
-              </Card.Body>
-              <Card.Footer>
-                <hr></hr>
-                <div className="stats">
-                  <i className="fas fa-history"></i>
-                  Updated 3 minutes ago
-                </div>
-              </Card.Footer>
-            </Card>
-          </Col>
-          <Col md="6">
-            <Card>
-              <Card.Header>
-                <Card.Title as="h4">Main Camera 2</Card.Title>
-                <p className="card-category">Location (name)</p>
-              </Card.Header>
-              <Card.Body>
-                <img
-                  src={require("assets/img/main2.png")}
-                  alt="..."
-                  style={{ width: "525px", height: "250px" }}
-                />
-              </Card.Body>
-              <Card.Footer>
-                <hr></hr>
-                <div className="stats">
-                  <i className="fas fa-history"></i>
-                  Updated 13 minutes ago
-                </div>
-              </Card.Footer>
-            </Card>
-          </Col>
           <Col md="8">
             <Card>
               <Card.Header>
                 <Card.Title as="h4">Important chart</Card.Title>
-                <p className="card-category">behaviour</p>
+                <p className="card-category">Total Inventory</p>
               </Card.Header>
               <Card.Body>
                 <div className="ct-chart" id="chartHours">
                   <ChartistGraph
                     data={{
                       labels: [
-                        "9:00AM",
-                        "12:00AM",
-                        "3:00PM",
-                        "6:00PM",
-                        "9:00PM",
-                        "12:00PM",
-                        "3:00AM",
-                        "6:00AM",
+                        "2007",
+                        "2008",
+                        "2009",
+                        "2010",
+                        "2011",
+                        "2012",
+                        "2013",
+                        "2014",
                       ],
                       series: [
                         [287, 385, 490, 492, 554, 586, 698, 695],
@@ -252,9 +208,9 @@ function Dashboard() {
               <Card.Footer>
                 <div className="legend">
                   <i className="fas fa-circle text-info"></i>
-                  Open <i className="fas fa-circle text-danger"></i>
-                  Click <i className="fas fa-circle text-warning"></i>
-                  Click Second Time
+                  Cows <i className="fas fa-circle text-danger"></i>
+                  Sheeps <i className="fas fa-circle text-warning"></i>
+                  Chickens
                 </div>
                 <hr></hr>
                 <div className="stats">
@@ -268,7 +224,7 @@ function Dashboard() {
             <Card>
               <Card.Header>
                 <Card.Title as="h4">Inventory Statistics</Card.Title>
-                <p className="card-category">Total Animals</p>
+                <p className="card-category">Total Distribution</p>
               </Card.Header>
               <Card.Body>
                 <div
@@ -277,8 +233,8 @@ function Dashboard() {
                 >
                   <ChartistGraph
                     data={{
-                      labels: ["40%", "20%", "40%"],
-                      series: [40, 20, 40],
+                      labels: ["60%", "40%", "20%"],
+                      series: [60, 40, 20],
                     }}
                     type="Pie"
                   />
@@ -303,7 +259,7 @@ function Dashboard() {
             <Card>
               <Card.Header>
                 <Card.Title as="h4">Chart Title </Card.Title>
-                <p className="card-category">All Animals</p>
+                <p className="card-category">Comparative Animals</p>
               </Card.Header>
               <Card.Body>
                 <div className="ct-chart" id="chartActivity">

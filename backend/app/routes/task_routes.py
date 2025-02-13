@@ -1,4 +1,6 @@
 from flask import Blueprint, jsonify, request
+from sqlalchemy.dialects.postgresql import ENUM
+
 from app.utils.db_util import db
 from datetime import datetime
 
@@ -10,20 +12,16 @@ class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    due_date = db.Column(db.DateTime, nullable=True)
-    status = db.Column(db.String(50), nullable=False, default="Pending")
-    priority = db.Column(db.String(50), nullable=True)
-    assigned_to = db.Column(db.Integer, db.ForeignKey('Users.id'), nullable=True)
+    status = db.Column(ENUM('Pending', 'In Progress', 'Completed', name='status_enum'), nullable=False, default='Pending')
+    priority = db.Column(ENUM('High', 'Medium', 'Low', name='priority_enum'), nullable=False, default='Medium')
 
     def to_dict(self):
         return {
             "id": self.id,
             "title": self.title,
             "description": self.description,
-            "due_date": self.due_date.isoformat() if self.due_date else None,
             "status": self.status,
             "priority": self.priority,
-            "assigned_to": self.assigned_to
         }
 
 @task_bp.route('/tasks', methods=['GET'])
@@ -41,10 +39,8 @@ def create_task():
         new_task = Task(
             title=data.get('title'),
             description=data.get('description'),
-            due_date=datetime.fromisoformat(data.get('due_date')) if data.get('due_date') else None,
             status=data.get('status', 'Pending'),
             priority=data.get('priority'),
-            assigned_to=data.get('assigned_to')
         )
         db.session.add(new_task)
         db.session.commit()
@@ -72,10 +68,8 @@ def update_task(task_id):
         data = request.json
         task.title = data.get('title', task.title)
         task.description = data.get('description', task.description)
-        task.due_date = datetime.fromisoformat(data.get('due_date')) if data.get('due_date') else task.due_date
         task.status = data.get('status', task.status)
         task.priority = data.get('priority', task.priority)
-        task.assigned_to = data.get('assigned_to', task.assigned_to)
 
         db.session.commit()
         return jsonify(task.to_dict())

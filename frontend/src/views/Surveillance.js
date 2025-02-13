@@ -58,7 +58,7 @@ function Surveillance() {
             </Card.Header>
             <Card.Body>
               <img
-                src={require("assets/img/main2.png")}
+                src={require("assets/img/main3.png")}
                 alt="..."
                 style={{ width: "540px", height: "250px" }}
               />
@@ -80,7 +80,7 @@ function Surveillance() {
             </Card.Header>
             <Card.Body>
               <img
-                src={require("assets/img/main2.png")}
+                src={require("assets/img/main4.png")}
                 alt="..."
                 style={{ width: "540px", height: "250px" }}
               />
