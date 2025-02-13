@@ -1,330 +1,328 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { Dropdown, Modal, Button, Form } from "react-bootstrap";
 
-// react-bootstrap components
-import {
-  Card,
-  Container,
-  Button,
-  Table,
-  Form,
-  OverlayTrigger,
-  Tooltip,
-  Row,
-  Col,
-} from "react-bootstrap";
+// Function to sort tasks by priority
+const sortByPriority = (tasks) => {
+  const priorityOrder = { High: 1, Medium: 2, Low: 3 };
+  return tasks.sort(
+    (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]
+  );
+};
 
-function Task() {
+function TaskManager() {
+  const [columns, setColumns] = useState({
+    Pending: [],
+    "In Progress": [],
+    Completed: [],
+  });
+
+  const [showModal, setShowModal] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const [newTask, setNewTask] = useState({
+    title: "",
+    description: "",
+    priority: "Low",
+  });
+
+  // Fetch tasks from the backend
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await axios.get("http://127.0.0.1:5000/tasks");
+        const tasks = response.data;
+
+        // Group tasks by their status
+        const groupedTasks = {
+          Pending: tasks.filter((task) => task.status === "Pending"),
+          "In Progress": tasks.filter((task) => task.status === "In Progress"),
+          Completed: tasks.filter((task) => task.status === "Completed"),
+        };
+
+        // Sort tasks by priority
+        Object.keys(groupedTasks).forEach((column) => {
+          groupedTasks[column] = sortByPriority(groupedTasks[column]);
+        });
+
+        setColumns(groupedTasks);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+
+    fetchTasks();
+  }, []);
+
+  // Handle drag and drop
+  const onDragEnd = async (result) => {
+    const { source, destination } = result;
+
+    if (!destination) return;
+
+    if (
+      source.droppableId === destination.droppableId &&
+      source.index === destination.index
+    ) {
+      return;
+    }
+
+    const sourceColumn = columns[source.droppableId];
+    const destColumn = columns[destination.droppableId];
+    const [movedTask] = sourceColumn.splice(source.index, 1);
+
+    movedTask.status = destination.droppableId;
+    destColumn.splice(destination.index, 0, movedTask);
+
+    setColumns({
+      ...columns,
+      [source.droppableId]: sourceColumn,
+      [destination.droppableId]: destColumn,
+    });
+
+    try {
+      await axios.put(`http://127.0.0.1:5000/tasks/${movedTask.id}`, {
+        status: movedTask.status,
+      });
+    } catch (error) {
+      console.error("Error updating task status:", error);
+    }
+  };
+
+  // Handle task deletion
+  const deleteTask = async (taskId) => {
+    try {
+      await axios.delete(`http://127.0.0.1:5000/tasks/${taskId}`);
+      const updatedColumns = { ...columns };
+      Object.keys(updatedColumns).forEach((status) => {
+        updatedColumns[status] = updatedColumns[status].filter(
+          (task) => task.id !== taskId
+        );
+      });
+      setColumns(updatedColumns);
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+  };
+
+  // Handle task edit click
+  const handleEditClick = (task) => {
+    setEditingTask(task);
+    setNewTask({
+      title: task.title,
+      description: task.description,
+      priority: task.priority,
+    });
+    setShowModal(true);
+  };
+
+  // Handle saving the new or edited task
+  const handleSaveTask = async () => {
+    if (editingTask) {
+      // Update existing task
+      const updatedTask = { ...editingTask, ...newTask };
+      try {
+        await axios.put(
+          `http://127.0.0.1:5000/tasks/${editingTask.id}`,
+          updatedTask
+        );
+
+        // Update the state
+        setColumns((prev) => {
+          const updatedColumns = { ...prev };
+          const taskList = updatedColumns[editingTask.status];
+          const taskIndex = taskList.findIndex(
+            (task) => task.id === editingTask.id
+          );
+          taskList[taskIndex] = updatedTask;
+
+          return updatedColumns;
+        });
+        setEditingTask(null);
+      } catch (error) {
+        console.error("Error updating task:", error);
+      }
+    } else {
+      // Add new task
+      const task = { ...newTask, status: "Pending" };
+
+      try {
+        const response = await axios.post("http://127.0.0.1:5000/tasks", task);
+        setColumns((prev) => ({
+          ...prev,
+          Pending: [...prev.Pending, response.data],
+        }));
+      } catch (error) {
+        console.error("Error adding new task:", error);
+      }
+    }
+
+    setShowModal(false);
+    setNewTask({ title: "", description: "", priority: "Low" });
+  };
+
+  // Calculate total tasks
+  const totalTasks = Object.values(columns).reduce(
+    (total, tasks) => total + tasks.length,
+    0
+  );
+
   return (
     <>
-      <Container fluid>
-        <Row>
-          <Col md="12">
-            <Card className="card-tasks">
-              <Card.Header>
-                <Card.Title as="h4">Tasks</Card.Title>
-                <p className="card-category">Backend development</p>
-              </Card.Header>
-              <Card.Body>
-                <div className="table-full-width">
-                  <Table>
-                    <tbody>
-                      <tr>
-                        <td>
-                          <Form.Check className="mb-1 pl-0">
-                            <Form.Check.Label>
-                              <Form.Check.Input
-                                defaultValue=""
-                                type="checkbox"
-                              ></Form.Check.Input>
-                              <span className="form-check-sign"></span>
-                            </Form.Check.Label>
-                          </Form.Check>
-                        </td>
-                        <td>
-                          Sign contract for "What are conference organizers
-                          afraid of?"
-                        </td>
-                        <td className="td-actions text-right">
-                          <OverlayTrigger
-                            overlay={
-                              <Tooltip id="tooltip-488980961">
-                                Edit Task..
-                              </Tooltip>
-                            }
-                          >
-                            <Button
-                              className="btn-simple btn-link p-1"
-                              type="button"
-                              variant="info"
-                            >
-                              <i className="fas fa-edit"></i>
-                            </Button>
-                          </OverlayTrigger>
-                          <OverlayTrigger
-                            overlay={
-                              <Tooltip id="tooltip-506045838">Remove..</Tooltip>
-                            }
-                          >
-                            <Button
-                              className="btn-simple btn-link p-1"
-                              type="button"
-                              variant="danger"
-                            >
-                              <i className="fas fa-times"></i>
-                            </Button>
-                          </OverlayTrigger>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <Form.Check className="mb-1 pl-0">
-                            <Form.Check.Label>
-                              <Form.Check.Input
-                                defaultChecked
-                                defaultValue=""
-                                type="checkbox"
-                              ></Form.Check.Input>
-                              <span className="form-check-sign"></span>
-                            </Form.Check.Label>
-                          </Form.Check>
-                        </td>
-                        <td>
-                          Lines From Great Russian Literature? Or E-mails From
-                          My Boss?
-                        </td>
-                        <td className="td-actions text-right">
-                          <OverlayTrigger
-                            overlay={
-                              <Tooltip id="tooltip-537440761">
-                                Edit Task..
-                              </Tooltip>
-                            }
-                          >
-                            <Button
-                              className="btn-simple btn-link p-1"
-                              type="button"
-                              variant="info"
-                            >
-                              <i className="fas fa-edit"></i>
-                            </Button>
-                          </OverlayTrigger>
-                          <OverlayTrigger
-                            overlay={
-                              <Tooltip id="tooltip-21130535">Remove..</Tooltip>
-                            }
-                          >
-                            <Button
-                              className="btn-simple btn-link p-1"
-                              type="button"
-                              variant="danger"
-                            >
-                              <i className="fas fa-times"></i>
-                            </Button>
-                          </OverlayTrigger>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <Form.Check className="mb-1 pl-0">
-                            <Form.Check.Label>
-                              <Form.Check.Input
-                                defaultChecked
-                                defaultValue=""
-                                type="checkbox"
-                              ></Form.Check.Input>
-                              <span className="form-check-sign"></span>
-                            </Form.Check.Label>
-                          </Form.Check>
-                        </td>
-                        <td>
-                          Flooded: One year later, assessing what was lost and
-                          what was found when a ravaging rain swept through
-                          metro Detroit
-                        </td>
-                        <td className="td-actions text-right">
-                          <OverlayTrigger
-                            overlay={
-                              <Tooltip id="tooltip-577232198">
-                                Edit Task..
-                              </Tooltip>
-                            }
-                          >
-                            <Button
-                              className="btn-simple btn-link p-1"
-                              type="button"
-                              variant="info"
-                            >
-                              <i className="fas fa-edit"></i>
-                            </Button>
-                          </OverlayTrigger>
-                          <OverlayTrigger
-                            overlay={
-                              <Tooltip id="tooltip-773861645">Remove..</Tooltip>
-                            }
-                          >
-                            <Button
-                              className="btn-simple btn-link p-1"
-                              type="button"
-                              variant="danger"
-                            >
-                              <i className="fas fa-times"></i>
-                            </Button>
-                          </OverlayTrigger>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <Form.Check className="mb-1 pl-0">
-                            <Form.Check.Label>
-                              <Form.Check.Input
-                                defaultChecked
-                                type="checkbox"
-                              ></Form.Check.Input>
-                              <span className="form-check-sign"></span>
-                            </Form.Check.Label>
-                          </Form.Check>
-                        </td>
-                        <td>
-                          Create 4 Invisible User Experiences you Never Knew
-                          About
-                        </td>
-                        <td className="td-actions text-right">
-                          <OverlayTrigger
-                            overlay={
-                              <Tooltip id="tooltip-422471719">
-                                Edit Task..
-                              </Tooltip>
-                            }
-                          >
-                            <Button
-                              className="btn-simple btn-link p-1"
-                              type="button"
-                              variant="info"
-                            >
-                              <i className="fas fa-edit"></i>
-                            </Button>
-                          </OverlayTrigger>
-                          <OverlayTrigger
-                            overlay={
-                              <Tooltip id="tooltip-829164576">Remove..</Tooltip>
-                            }
-                          >
-                            <Button
-                              className="btn-simple btn-link p-1"
-                              type="button"
-                              variant="danger"
-                            >
-                              <i className="fas fa-times"></i>
-                            </Button>
-                          </OverlayTrigger>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <Form.Check className="mb-1 pl-0">
-                            <Form.Check.Label>
-                              <Form.Check.Input
-                                defaultValue=""
-                                type="checkbox"
-                              ></Form.Check.Input>
-                              <span className="form-check-sign"></span>
-                            </Form.Check.Label>
-                          </Form.Check>
-                        </td>
-                        <td>Read "Following makes Medium better"</td>
-                        <td className="td-actions text-right">
-                          <OverlayTrigger
-                            overlay={
-                              <Tooltip id="tooltip-160575228">
-                                Edit Task..
-                              </Tooltip>
-                            }
-                          >
-                            <Button
-                              className="btn-simple btn-link p-1"
-                              type="button"
-                              variant="info"
-                            >
-                              <i className="fas fa-edit"></i>
-                            </Button>
-                          </OverlayTrigger>
-                          <OverlayTrigger
-                            overlay={
-                              <Tooltip id="tooltip-922981635">Remove..</Tooltip>
-                            }
-                          >
-                            <Button
-                              className="btn-simple btn-link p-1"
-                              type="button"
-                              variant="danger"
-                            >
-                              <i className="fas fa-times"></i>
-                            </Button>
-                          </OverlayTrigger>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <Form.Check className="mb-1 pl-0">
-                            <Form.Check.Label>
-                              <Form.Check.Input
-                                defaultValue=""
-                                disabled
-                                type="checkbox"
-                              ></Form.Check.Input>
-                              <span className="form-check-sign"></span>
-                            </Form.Check.Label>
-                          </Form.Check>
-                        </td>
-                        <td>Unfollow 5 enemies from twitter</td>
-                        <td className="td-actions text-right">
-                          <OverlayTrigger
-                            overlay={
-                              <Tooltip id="tooltip-938342127">
-                                Edit Task..
-                              </Tooltip>
-                            }
-                          >
-                            <Button
-                              className="btn-simple btn-link p-1"
-                              type="button"
-                              variant="info"
-                            >
-                              <i className="fas fa-edit"></i>
-                            </Button>
-                          </OverlayTrigger>
-                          <OverlayTrigger
-                            overlay={
-                              <Tooltip id="tooltip-119603706">Remove..</Tooltip>
-                            }
-                          >
-                            <Button
-                              className="btn-simple btn-link p-1"
-                              type="button"
-                              variant="danger"
-                            >
-                              <i className="fas fa-times"></i>
-                            </Button>
-                          </OverlayTrigger>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </Table>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          {Object.entries(columns).map(([columnId, tasks]) => (
+            <Droppable key={columnId} droppableId={columnId}>
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  style={{
+                    width: "30%",
+                    minHeight: "500px",
+                    border: "1px solid lightgray",
+                    borderRadius: "5px",
+                    padding: "10px",
+                    backgroundColor: "#f9f9f9",
+                  }}
+                >
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h4>
+                      {columnId}: {tasks.length}/{totalTasks}
+                    </h4>
+                    {columnId === "Pending" && (
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => setShowModal(true)}
+                      >
+                        ➕
+                      </button>
+                    )}
+                  </div>
+                  {tasks.map((task, index) => (
+                    <Draggable
+                      key={task.id}
+                      draggableId={task.id.toString()}
+                      index={index}
+                    >
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className="task-item mb-3 p-2 border rounded bg-white"
+                        >
+                          <div className="d-flex justify-content-between align-items-center">
+                            <div>
+                              <h5 className="mb-1">{task.title}</h5>
+                              <p className="text-muted mb-1">
+                                {task.description}
+                              </p>
+                              <span
+                                className={`badge ${
+                                  task.priority === "High"
+                                    ? "bg-danger"
+                                    : task.priority === "Medium"
+                                    ? "bg-warning"
+                                    : "bg-secondary"
+                                }`}
+                              >
+                                {task.priority} Priority
+                              </span>
+                            </div>
+                            <Dropdown>
+                              <Dropdown.Toggle
+                                as="div"
+                                className="text-secondary cursor-pointer"
+                                style={{ fontSize: "1.5rem" }}
+                              ></Dropdown.Toggle>
+                              <Dropdown.Menu>
+                                <Dropdown.Item
+                                  onClick={() => handleEditClick(task)}
+                                >
+                                  Edit Task
+                                </Dropdown.Item>
+                                <Dropdown.Item
+                                  onClick={() => deleteTask(task.id)}
+                                >
+                                  Delete Task
+                                </Dropdown.Item>
+                              </Dropdown.Menu>
+                            </Dropdown>
+                          </div>
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
                 </div>
-              </Card.Body>
-              <Card.Footer>
-                <hr></hr>
-                <div className="stats">
-                  <i className="now-ui-icons loader_refresh spin"></i>
-                  Updated 3 minutes ago
-                </div>
-              </Card.Footer>
-            </Card>
-          </Col>
-        </Row>
-      </Container>
+              )}
+            </Droppable>
+          ))}
+        </div>
+      </DragDropContext>
+
+      {/* Modal for Adding/Editing Task */}
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {editingTask ? "Edit Task" : "Add New Task"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Title</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter task title"
+                value={newTask.title}
+                onChange={(e) =>
+                  setNewTask((prev) => ({ ...prev, title: e.target.value }))
+                }
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Description</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                placeholder="Enter task description"
+                value={newTask.description}
+                onChange={(e) =>
+                  setNewTask((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Priority</Form.Label>
+              <Form.Select
+                value={newTask.priority}
+                onChange={(e) =>
+                  setNewTask((prev) => ({ ...prev, priority: e.target.value }))
+                }
+              >
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </Form.Select>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleSaveTask}>
+            {editingTask ? "Save Changes" : "Add Task"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }
 
-export default Task;
+export default TaskManager;
