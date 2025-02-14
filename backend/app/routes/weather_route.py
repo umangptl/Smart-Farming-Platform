@@ -49,9 +49,9 @@ def get_weather():
             return jsonify({"error": "Please provide a city or latitude and longitude."}), 400
 
         if city:
-            params = {'q': city, 'appid': API_KEY, 'units': 'metric'}
+            params = {'q': city, 'appid': API_KEY, 'units': 'Imperial'}
         else:
-            params = {'lat': lat, 'lon': lon, 'appid': API_KEY, 'units': 'metric'}
+            params = {'lat': lat, 'lon': lon, 'appid': API_KEY, 'units': 'Imperial'}
 
         response = requests.get(BASE_URL, params=params)
 
@@ -127,7 +127,7 @@ def get_temperature_map():
 @weather_bp.route('/hourly-forecast', methods=['GET'])
 def get_hourly_forecast():
     city = request.args.get('city')
-    units = request.args.get('units', 'metric')
+    units = request.args.get('units', 'Imperial')
 
     if not city:
         return jsonify({"error": "City is required for hourly forecast."}), 400
@@ -168,7 +168,7 @@ def get_hourly_forecast():
 @weather_bp.route('/daily-forecast', methods=['GET'])
 def get_daily_forecast():
     city = request.args.get('city')
-    units = request.args.get('units', 'metric')
+    units = request.args.get('units', 'Imperial')
 
     if not city:
         return jsonify({"error": "City is required for daily forecast."}), 400
