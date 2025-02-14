@@ -21,7 +21,7 @@ const useLivestock = () => {
     loadData();
   }, []);
 
-  return { livestock, loading, error };
+  return { livestock, setLivestock, loading, error };
 };
 
 export default useLivestock;
