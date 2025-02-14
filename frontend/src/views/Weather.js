@@ -223,7 +223,7 @@ const Weather = () => {
 
                 {/* Middle Section: Current Temperature */}
                 <h2 style={{ margin: 0, textAlign: "right" }}>
-                  {weatherData.temperature.current}°C
+                  {weatherData.temperature.current}°F
                 </h2>
 
                 {/* Bottom Section */}
@@ -237,10 +237,10 @@ const Weather = () => {
                   {/* High and Low on the Left */}
                   <div>
                     <h5 style={{ margin: 0 }}>
-                      H: {weatherData.temperature.high}°C
+                      H: {Math.ceil(weatherData.temperature.high)}°F
                     </h5>
                     <h5 style={{ margin: 0 }}>
-                      L: {weatherData.temperature.low}°C
+                      L: {Math.floor(weatherData.temperature.low)}°F
                     </h5>
                   </div>
 
@@ -355,7 +355,7 @@ const Weather = () => {
                 />
               </Card.Body>
               <Card.Footer style={{ textAlign: "center" }}>
-                {hourlyData.temperature}°C
+                {hourlyData.temperature}°F
               </Card.Footer>
             </Card>
           </Col>
@@ -374,7 +374,13 @@ const Weather = () => {
                   alignItems: "center",
                 }}
               >
-                <h5 style={{ margin: 0 }}>{dailyData.date}</h5>
+                <h5 style={{ margin: 0 }}>
+                  {new Date(dailyData.date).toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </h5>
 
                 <img
                   src={require(`assets/img/weathericon/${dailyData.icon}.png`)}
@@ -383,7 +389,7 @@ const Weather = () => {
                 />
 
                 <p style={{ margin: 0, textAlign: "right" }}>
-                  {dailyData.temp_max}°C / {dailyData.temp_min}°C
+                  {dailyData.temp_max}°F / {dailyData.temp_min}°F
                 </p>
               </Card.Body>
             </Card>
