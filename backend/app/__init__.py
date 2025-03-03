@@ -9,6 +9,7 @@ from .routes.example_route import main_routes
 from .routes.task_routes import task_bp
 from .routes.user_routes import user_bp
 from .routes.weather_route import weather_bp
+from .routes.enums_routes import enums_bp
 
 
 def create_app():
@@ -27,5 +28,6 @@ def create_app():
     app.register_blueprint(main_routes)
     app.register_blueprint(user_bp)
     app.register_blueprint(weather_bp)
+    app.register_blueprint(enums_bp)
     
     return app

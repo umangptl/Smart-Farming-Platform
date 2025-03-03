@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from app.utils.db_util import db
-from app.models.livestock import GenderEnum, LivestockTypeEnum, Livestock
+from app.models.livestock import GenderEnum, LivestockTypeEnum, HealthStatusEnum, BreedingStatusEnum, Livestock
 
 # Blueprint for livestock-related routes
 livestock_bp = Blueprint('livestock', __name__)
@@ -10,19 +10,21 @@ livestock_bp = Blueprint('livestock', __name__)
 def create_livestock():
     try:
         data = request.json
-        new_livestock = Livestock(
-            type=LivestockTypeEnum(data.get("type")),
-            breed=data.get("breed"),
-            dob=data.get("dob"),
-            health_status=data.get("health_status"),
-            gender=GenderEnum(data.get("gender")),
-            livestock_name=data.get("livestock_name"),
-            weight=data.get("weight"),
-            paddockID=data.get("paddockID")
-        )
+
+        # Convert Enums before unpacking data
+        data["type"] = LivestockTypeEnum(data["type"])
+        data["gender"] = GenderEnum(data["gender"])
+        data["health_status"] = HealthStatusEnum(data["health_status"])
+        data["breeding_status"] = BreedingStatusEnum(data["breeding_status"])
+
+        # Create new livestock instance dynamically
+        new_livestock = Livestock(**data)
+
         db.session.add(new_livestock)
         db.session.commit()
+
         return jsonify(new_livestock.to_dict()), 201
+
     except ValueError as ve:
         return jsonify({"error": f"Invalid input: {str(ve)}"}), 400
     except Exception as e:

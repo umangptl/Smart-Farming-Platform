@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Card, Container, Row, Col, ProgressBar, Alert, Button, Modal, Form } from "react-bootstrap";
 import TwoColumnGrid from "components/Inventory_page/TwoColumnGrid";
 import useLivestock from "hooks/useLivestock";
@@ -9,12 +9,16 @@ import { MdHealthAndSafety } from "react-icons/md";
 
 import SelectFilter from "components/Inventory_page/SelectFilter";
 import { animalTypeOptions, breedingStatusOptions, genderOptions, healthStatusOptions } from "constants";
+import { EnumsContext } from "../context/EnumsContext";
+import { createLivestock } from "api/livestockApi";
 
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { createLivestock } from "api/livestockApi";
 
 function TableList() {
+
+  const enums = useContext(EnumsContext)
+
   // Hook to fetch livestock
   const {livestock, setLivestock, loading, error} = useLivestock([]);
 
@@ -34,7 +38,7 @@ function TableList() {
     purchase_price: "",
     dob: "",
     gender: "male",
-    breeding_status: "open",
+    breeding_status: "heifer",
     health_status: "healthy",
   }
 
@@ -51,7 +55,8 @@ function TableList() {
     const newEntry = { ...newCattle, livestockID: livestock.length + 1 };
     setLivestock([...livestock, newEntry]); // Update state with new livestock
     setShowModal(false); // Close modal
-    // createLivestock(newCattle);
+    console.log(newCattle)
+    createLivestock(newCattle);
     setNewCattle(defaultCattle); // Reset form
   };
 
@@ -129,8 +134,8 @@ function TableList() {
       <Row className="mb-3">
         <Col md={8}>
           <Row>
-            <Col><SelectFilter label="Type" value={typeFilter} options={animalTypeOptions} onSelect={setTypeFilter} /></Col>
-            <Col><SelectFilter label="Breeding Status" value={breedingStatusFilter} options={breedingStatusOptions} onSelect={setBreedingStatusFilter} /></Col>
+            <Col><SelectFilter label="Type" value={typeFilter} options={enums.animalTypeOptions} onSelect={setTypeFilter} /></Col>
+            <Col><SelectFilter label="Breeding Status" value={breedingStatusFilter} options={enums.breedingStatusOptions} onSelect={setBreedingStatusFilter} /></Col>
             <Col><SelectFilter label="Age" value={ageFilter} options={["<1 years", "1-3 years", "3+ years"]} onSelect={setAgeFilter} /></Col>
             <Col><SelectFilter label="Breed" value={breedFilter} options={breedOptions} onSelect={setBreedFilter} /></Col>
           </Row>
@@ -253,8 +258,8 @@ function TableList() {
             <Form.Group>
               <Form.Label>Type</Form.Label>
               <Form.Control as="select" name="type" value={newCattle.type} onChange={handleInputChange}>
-                {animalTypeOptions.map((type) => (
-                  <option value={type}>{type}</option>
+                {enums.animalTypeOptions.map((type) => (
+                  <option key={type} value={type}>{type}</option>
                 ))}
               </Form.Control>
             </Form.Group>
@@ -270,9 +275,7 @@ function TableList() {
               <Form.Label>Purchase Price ($)</Form.Label>
               <Form.Control type="number" name="purchase_price" value={newCattle.purchase_price} 
                 onChange={(e) => {
-                  console(newCattle)
                   setNewCattle({ ...newCattle, purchase_price: Number(e.target.value) })
-                  console(newCattle)
                 }}
               />
             </Form.Group>
@@ -291,7 +294,7 @@ function TableList() {
             <Form.Group>
               <Form.Label>Breeding Status</Form.Label>
               <Form.Control as="select" name="breeding_status" value={newCattle.breeding_status} onChange={handleInputChange}>
-              {breedingStatusOptions.map((type) => (
+              {enums.breedingStatusOptions.map((type) => (
                   <option value={type}>{type}</option>
                 ))}
               </Form.Control>
@@ -299,7 +302,7 @@ function TableList() {
             <Form.Group>
               <Form.Label>Health Status</Form.Label>
               <Form.Control as="select" name="health_status" value={newCattle.health_status} onChange={handleInputChange}>
-              {healthStatusOptions.map((healthStatus) => (
+              {enums.healthStatusOptions.map((healthStatus) => (
                   <option value={healthStatus}>{healthStatus}</option>
                 ))}
               </Form.Control>
