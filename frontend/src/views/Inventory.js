@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { Card, Container, Row, Col, ProgressBar, Alert, Button, Modal, Form } from "react-bootstrap";
 import TwoColumnGrid from "components/Inventory_page/TwoColumnGrid";
 import useLivestock from "hooks/useLivestock";
@@ -8,12 +8,13 @@ import { GiBullHorns, GiSheep } from "react-icons/gi";
 import { MdHealthAndSafety } from "react-icons/md";
 
 import SelectFilter from "components/Inventory_page/SelectFilter";
-import { animalTypeOptions, breedingStatusOptions, genderOptions, healthStatusOptions } from "constants";
+import SelectInput from "components/Inventory_page/SelectInput";
 import { EnumsContext } from "../context/EnumsContext";
 import { createLivestock } from "api/livestockApi";
 
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import usePaddock from "hooks/usePaddock";
 
 function TableList() {
 
@@ -21,6 +22,22 @@ function TableList() {
 
   // Hook to fetch livestock
   const {livestock, setLivestock, loading, error} = useLivestock([]);
+
+  const { paddocks } = usePaddock([]);
+
+  const [ sortedPaddocks, setSortedPaddocks ] = useState([]);
+  // Effect: Sort paddocks when data updates
+  useEffect(() => {
+    if (paddocks.length > 0) {
+      setSortedPaddocks([...paddocks].sort((a, b) => a.paddockID - b.paddockID));
+    }
+  }, [paddocks]); // Runs only when paddocks updates
+
+  // Convert sorted paddocks into select options
+  const paddockOptions = sortedPaddocks.map((p) => ({
+    text: `${p.paddockID} - ${p.name}`,
+    value: p.paddockID,
+  }));
 
   // Filter States
   const [typeFilter, setTypeFilter] = useState("");
@@ -34,12 +51,15 @@ function TableList() {
   const defaultCattle = {
     type: "cattle",
     breed: "",
-    purchase_date: "",
-    purchase_price: "",
     dob: "",
-    gender: "male",
-    breeding_status: "heifer",
+    purchase_price: "",
+    purchase_date: "",
     health_status: "healthy",
+    breeding_status: "heifer",
+    gender: "male",
+    // livestock_name: "",   CAN BE NULLABLE
+    weight: "",
+    paddockID: ""
   }
 
   // Form state for new cattle
@@ -255,17 +275,14 @@ function TableList() {
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <Form.Group>
-              <Form.Label>Type</Form.Label>
-              <Form.Control as="select" name="type" value={newCattle.type} onChange={handleInputChange}>
-                {enums.animalTypeOptions.map((type) => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </Form.Control>
-            </Form.Group>
+            <SelectInput label="Type" name="type" value={newCattle.type} options={enums.animalTypeOptions} onChange={handleInputChange} />
             <Form.Group>
               <Form.Label>Breed</Form.Label>
               <Form.Control type="text" name="breed" value={newCattle.breed} onChange={handleInputChange} />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Name</Form.Label>
+              <Form.Control type="text" name="name" value={newCattle.name} onChange={handleInputChange} />
             </Form.Group>
             <Form.Group>
               <Form.Label>Purchase Date</Form.Label>
@@ -280,13 +297,21 @@ function TableList() {
               />
             </Form.Group>
             <Form.Group>
+              <Form.Label>Weight (kg)</Form.Label>
+              <Form.Control type="number" name="weight" value={newCattle.weight} 
+                onChange={(e) => {
+                  setNewCattle({ ...newCattle, weight: Number(e.target.value) })
+                }}
+              />
+            </Form.Group>
+            <Form.Group>
               <Form.Label>Date of Birth</Form.Label>
               <Form.Control type="date" name="dob" value={newCattle.dob} onChange={handleInputChange} />
             </Form.Group>
             <Form.Group>
               <Form.Label>Gender</Form.Label>
               <Form.Control as="select" name="gender" value={newCattle.gender} onChange={handleInputChange}>
-              {genderOptions.map((gender) => (
+              {enums.genderOptions.map((gender) => (
                   <option value={gender}>{gender}</option>
                 ))}
               </Form.Control>
@@ -307,6 +332,7 @@ function TableList() {
                 ))}
               </Form.Control>
             </Form.Group>
+            <SelectInput label="Paddock" name="paddockID" value={newCattle.paddockID} options={paddockOptions} onChange={handleInputChange} />
           </Form>
         </Modal.Body>
         <Modal.Footer>
