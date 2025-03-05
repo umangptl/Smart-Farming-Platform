@@ -37,6 +37,7 @@ class Livestock(db.Model):
     livestockID = db.Column(db.Integer, primary_key=True, autoincrement=True)  # Primary key
     type = db.Column(db.Enum(LivestockTypeEnum), nullable=False)  # Livestock type as enum
     breed = db.Column(db.String(45), nullable=False)  # Breed of livestock
+    name = db.Column(db.String(45), nullable=True)  # Breed of livestock
     dob = db.Column(db.Date, nullable=False)  # Date of birth
     purchase_price = db.Column(db.Integer, nullable=False) # Price of purchase
     purchase_date = db.Column(db.Date, nullable=False)
@@ -53,6 +54,7 @@ class Livestock(db.Model):
             "livestockID": self.livestockID,
             "type": self.type.value if self.type else None,  # Convert enum to string
             "breed": self.breed,
+            "name": self.name,
             "dob": self.dob.isoformat() if self.dob else None,
             "purchase_price": self.purchase_price,
             "purchase_date": self.purchase_date.isoformat() if self.purchase_date else None,
