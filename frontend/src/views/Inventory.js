@@ -15,6 +15,8 @@ import { createLivestock } from "api/livestockApi";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import usePaddock from "hooks/usePaddock";
+import { updateLivestock } from "api/livestockApi";
+import { deleteLivestock } from "api/livestockApi";
 
 function TableList() {
 
@@ -86,6 +88,7 @@ function TableList() {
   
     // Remove livestock by filtering out the deleted one
     setLivestock(livestock.filter(animal => animal.livestockID !== livestockID));
+    deleteLivestock(livestockID);
   };
 
   // Handle adding new livestock
@@ -95,6 +98,7 @@ function TableList() {
       setLivestock(livestock.map(item => 
         item.livestockID === editingCattleId ? { ...newCattle } : item
       ));
+      updateLivestock(editingCattleId, newCattle)
     } else {
       // Add new livestock
       const newEntry = { ...newCattle, livestockID: livestock.length + 1 };
@@ -108,7 +112,10 @@ function TableList() {
   };
 
   // Get Unique Breeds Dynamically
-  const breedOptions = [...new Set(livestock.map((animal) => animal.breed))];
+  const breedOptions = [...new Set(livestock
+    .map((animal) => animal.breed)
+    .sort((a,b) => a.localeCompare(b))
+  )];
 
   // Function to calculate age based on Date of Birth
   const calculateAgeString = (birth_date) => {
@@ -210,7 +217,10 @@ function TableList() {
             variant="primary" 
             className="d-flex align-items-center justify-content-center rounded-circle" 
             style={{ width: "40px", height: "40px", padding: "0" }}
-            onClick={() => setShowModal(true)}
+            onClick={() => (
+              setNewCattle(defaultCattle),
+              setShowModal(true)
+            )}
           >
             <FaPlus size={20} />
           </Button>

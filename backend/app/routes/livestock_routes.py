@@ -34,7 +34,7 @@ def create_livestock():
 @livestock_bp.route('/livestock', methods=['GET'])
 def get_all_livestock():
     try:
-        livestock_list = Livestock.query.all()
+        livestock_list = Livestock.query.order_by(Livestock.livestockID.asc()).all()
         return jsonify([livestock.to_dict() for livestock in livestock_list])
     except Exception as e:
         return jsonify({"error": f"Failed to retrieve livestock: {str(e)}"}), 500
@@ -59,26 +59,18 @@ def update_livestock(livestockID):
         if not livestock:
             return jsonify({"error": "Livestock not found"}), 404
 
-        # Update fields if provided
-        if "type" in data:
-            livestock.type = LivestockTypeEnum(data.get("type"))
-        if "breed" in data:
-            livestock.breed = data.get("breed")
-        if "dob" in data:
-            livestock.dob = data.get("dob")
-        if "health_status" in data:
-            livestock.health_status = data.get("health_status")
-        if "gender" in data:
-            livestock.gender = GenderEnum(data.get("gender"))
-        if "livestock_name" in data:
-            livestock.livestock_name = data.get("livestock_name")
-        if "weight" in data:
-            livestock.weight = data.get("weight")
-        if "paddockID" in data:
-            livestock.paddockID = data.get("paddockID")
+        # Loop through data keys and update only existing attributes in Livestock model
+        for key, value in data.items():
+            if hasattr(livestock, key):  # Check if the attribute exists in the model
+                if isinstance(getattr(Livestock, key).property.columns[0].type, db.Enum):  
+                    # Convert Enums correctly
+                    enum_class = getattr(Livestock, key).type.enum_class
+                    setattr(livestock, key, enum_class(value))
+                else:
+                    setattr(livestock, key, value)
 
         db.session.commit()
-        return jsonify(livestock.to_dict())
+        return jsonify(livestock.to_dict()), 200
     except ValueError as ve:
         return jsonify({"error": f"Invalid input: {str(ve)}"}), 400
     except Exception as e:
