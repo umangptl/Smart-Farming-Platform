@@ -5,6 +5,7 @@ import Tasks from "views/Tasks";
 import Inventory from "views/Inventory";
 import Notifications from "views/Notifications.js";
 import User from "views/UserProfile";
+import ModelTestPage from "views/ModelTestPage"
 
 const dashboardRoutes = [
   {
@@ -54,6 +55,13 @@ const dashboardRoutes = [
     name: "Notifications",
     icon: "nc-icon nc-bell-55",
     component: Notifications,
+    layout: "/admin",
+  },
+  {
+    path: "/ml_models",
+    name: "ML Models",
+    icon: "nc-icon nc-vector ",
+    component: ModelTestPage,
     layout: "/admin",
   },
 ];

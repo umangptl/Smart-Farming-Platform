@@ -1,5 +1,5 @@
 from tensorflow.keras.models import load_model
-from config import MODEL_PATH
+from app.config import MODEL_PATH
 
 def load_parking_model():
     """Loads and returns the trained ML model."""
