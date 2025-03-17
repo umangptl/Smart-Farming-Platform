@@ -41,12 +41,9 @@ def process_video(model_name, video_path, mask_path):
 
     cap.release()
     
-    video_name = os.path.basename(video_path)
-    video_name_no_extension, video_extension = os.path.splitext(video_name)
-    processed_video_name = f'{video_name_no_extension}_processed{video_extension}'
 
     # Save processed video
-    return save_video(processed_frames, fps, processed_video_name)
+    return save_video(processed_frames, fps, video_path, model_name)
 
 
 def process_frame(frame, model, mask_name=None):
@@ -115,9 +112,14 @@ def extract_rois_from_mask(mask_path):
     return rois
 
 
-def save_video(frames, fps, processed_video_name='pprocessed_video.mp4'):
+def save_video(frames, fps, video_path, model_name):
     """Saves the processed frames as a video."""
+    
+    video_name = os.path.basename(video_path)
+    video_name_no_extension, video_extension = os.path.splitext(video_name)
+    processed_video_name = f'{video_name_no_extension}_processed_with_{model_name}{video_extension}'
     processed_video_path = os.path.join(Config.STATIC_FOLDER, processed_video_name)
+    
     merge_frames_to_video(frames, processed_video_path, fps=fps)
     return processed_video_path
 
