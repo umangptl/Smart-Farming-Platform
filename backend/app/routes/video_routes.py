@@ -14,39 +14,41 @@ def allowed_file(filename):
 @video_bp.route("/upload", methods=["POST"])
 def upload_video():
     if "file" not in request.files:
-        return jsonify({"error": "No file part"}), 400
+        return jsonify({"error": "No file uploaded"}), 400
 
     file = request.files["file"]
     if file.filename == "":
         return jsonify({"error": "No selected file"}), 400
 
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(Config.UPLOAD_FOLDER, filename)
-        file.save(file_path)
+    # if not allowed_file(file.filename):
+    #     return jsonify({"error": "Invalid file type"}), 400
+        
+    filename = secure_filename(file.filename)
+    input_video_path = os.path.join(Config.UPLOAD_FOLDER, filename)
+    file.save(input_video_path)
 
-        return jsonify({"message": "File uploaded successfully", "file_path": file_path}), 200
-
-    return jsonify({"error": "Invalid file type"}), 400
+    return jsonify({"message": "File uploaded successfully", "file_path": input_video_path}), 200
 
 # Process Video with ML Model API
 @video_bp.route("/process", methods=["POST"])
 def process():
     data = request.get_json()
     video_name = data.get("video_name")
-    video_path = os.path.join(Config.UPLOAD_FOLDER, video_name)
     mask_name = data.get("mask_name")
-    mask_path = os.path.join(Config.UPLOAD_FOLDER, mask_name)
-    model_name = data.get("model_name", "parking_detector")  # Default to "parking_detector"
-    print(video_name)
-    print(mask_name)
-
-    if not video_path:
-        return jsonify({"error": "No video path provided"}), 400
+    model_name = data.get("model_name")  # Default to "parking_detector"
+    
+    if not video_name:
+        return jsonify({"error": "No video name provided"}), 400
+    
+    if not model_name:
+        return jsonify({"error": "No model name provided"}), 400
+    
+    video_path = os.path.join(Config.UPLOAD_FOLDER, video_name)
+    mask_path = None if mask_name == None else os.path.join(Config.UPLOAD_FOLDER, mask_name)
 
     # Process the video using the selected model
     try:
-        processed_video_path = process_video(video_path, mask_path, model_name)
+        processed_video_path = process_video(model_name, video_path, mask_path)
         return jsonify({
             "message": "Processing complete",
             "video_url": f"/api/videos/processed/{os.path.basename(processed_video_path)}",

@@ -1,12 +1,96 @@
 import cv2
 import os
-import numpy as np
-from moviepy.editor import ImageSequenceClip
 from app.config import Config
-from app.services.ml_image_service import MLModelService
+from app.services.MLModelProvider import MLModelProvider
 
 # Load ML model service
-model_service = MLModelService()
+model_provider = MLModelProvider()
+
+def process_video(model_name, video_path, mask_path):
+    """
+    Processes a video for parking occupancy detection.
+    
+    - If the selected model requires a mask, extract ROIs from it.
+    - If the model is YOLO-based, use its own detection capabilities.
+    
+    Args:
+        video_path (str): Path to the input video.
+        model_name (str): ML model to use.
+
+    Returns:
+        str: Path to the processed video.
+    """
+    model = model_provider.get_model(model_name)
+
+    # Open the video
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        raise ValueError(f"Could not open video file: {video_path}")
+
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    processed_frames = []
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break  # End of video
+
+        # Process individual frame
+        processed_frame = process_frame(frame, model, mask_path)
+        processed_frames.append(processed_frame)
+
+    cap.release()
+    
+    video_name = os.path.basename(video_path)
+    video_name_no_extension, video_extension = os.path.splitext(video_name)
+    processed_video_name = f'{video_name_no_extension}_processed{video_extension}'
+
+    # Save processed video
+    return save_video(processed_frames, fps, processed_video_name)
+
+
+def process_frame(frame, model, mask_name=None):
+    """Processes a single frame using the given model."""
+    rois_bbox, cropped_rois = get_rois_for_model(frame, model, mask_name)
+    predictions = model.predict_batch(cropped_rois)
+
+    # Draw bounding boxes and return processed frame
+    return draw_predicted_boxes(frame, rois_bbox, predictions)
+
+
+def get_rois_for_model(frame, model, mask_name=None):
+    """Extracts ROIs for the model (from a mask if required, otherwise uses YOLO detection)."""
+    if model.requires_mask:
+        if not mask_name:
+            raise ValueError("Mask name not provided")
+        
+        mask_path = os.path.join(Config.UPLOAD_FOLDER, mask_name)
+        if not os.path.exists(mask_path):
+            raise ValueError(f"Mask '{mask_name}' not found")
+
+        rois_bbox = extract_rois_from_mask(mask_path)
+        cropped_rois = [frame[y:y+h, x:x+w] for (x, y, w, h) in rois_bbox]
+    else:
+        # YOLO model detects objects and returns bounding boxes directly
+        detections = model.predict(frame)
+        rois_bbox = [bbox for bbox, _ in detections]
+        cropped_rois = [frame[y:y+h, x:x+w] for (x, y, w, h) in rois_bbox]
+
+    return rois_bbox, cropped_rois
+
+
+def draw_predicted_boxes(frame, parking_spot_rois, predictions):
+    """
+    Draws bounding boxes on the frame based on ML predictions.
+    Supports both binary classification (Local Model) and object detection (YOLO).
+    """
+    for (bbox, predicted_class) in zip(parking_spot_rois, predictions):
+        x, y, w, h = bbox
+        color = (0, 255, 0) if predicted_class == 0 else (0, 0, 255)  # Green = vacant, Red = occupied
+        cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+
+    return frame
+
 
 def extract_rois_from_mask(mask_path):
     """
@@ -30,100 +114,38 @@ def extract_rois_from_mask(mask_path):
 
     return rois
 
-def process_video(video_path, mask_path, model_name="parking_detector"):
-    """
-    Processes the video by:
-    1. Extracting frames
-    2. Cropping parking spots using the provided mask
-    3. Running ML inference in batches
-    4. Drawing bounding boxes on original frames
-    5. Merging processed frames into a new video
 
-    Args:
-        video_path (str): Path to the input video file
-        mask_path (str): Path to the parking spot mask image
-        model_name (str): The ML model to use for classification
-
-    Returns:
-        str: Path to the processed video with overlays
-    """
-    if model_name not in model_service.models:
-        raise ValueError(f"Model '{model_name}' not found. Available models: {list(model_service.models.keys())}")
-
-    # Extract ROIs (parking spot locations) from the mask
-    rois_bbox = extract_rois_from_mask(mask_path)
-
-    # Open the input video
-    cap = cv2.VideoCapture(video_path)
-    if not cap.isOpened():
-        raise ValueError(f"Could not open video file: {video_path}")
-    
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
-
-    # Output storage
-    processed_frames = []
-    frame_count = 0
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break  # End of video
-
-        # Extract parking spot ROIs from the current frame
-        cropped_rois = [frame[y:y+h, x:x+w] for (x, y, w, h) in rois_bbox]
-
-        # Run batch inference
-        predictions = model_service.predict_batch(cropped_rois, model_name)
-
-        # Draw bounding boxes on the original frame
-        processed_frame = draw_predicted_boxes(frame, rois_bbox, predictions)
-
-        # Store processed frame
-        processed_frames.append(processed_frame)
-        frame_count += 1
-
-    cap.release()
-
-    # Merge processed frames into a video
-    processed_video_path = os.path.join(Config.STATIC_FOLDER, "processed_video.mp4")
-    merge_frames_to_video(processed_frames, processed_video_path, fps=fps)
-
+def save_video(frames, fps, processed_video_name='pprocessed_video.mp4'):
+    """Saves the processed frames as a video."""
+    processed_video_path = os.path.join(Config.STATIC_FOLDER, processed_video_name)
+    merge_frames_to_video(frames, processed_video_path, fps=fps)
     return processed_video_path
-
-def draw_predicted_boxes(frame, parking_spot_rois, predictions):
-    """
-    Draws bounding boxes on the frame based on ML predictions.
-
-    Args:
-        frame (numpy.ndarray): Original frame
-        parking_spot_rois (list): List of bounding boxes [(x, y, w, h)]
-        predictions (list): List of binary predictions (0 = vacant, 1 = occupied)
-
-    Returns:
-        numpy.ndarray: Frame with bounding boxes drawn
-    """
-    for (bbox, predicted_class) in zip(parking_spot_rois, predictions):
-        x, y, w, h = bbox
-        color = (0, 255, 0) if predicted_class == 0 else (0, 0, 255)  # Green = vacant, Red = occupied
-        cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-
-    return frame
 
 def merge_frames_to_video(frames, output_video_path, fps=30):
     """
-    Merges processed frames into a new video.
+    Merges processed frames into a video using OpenCV.
 
     Args:
-        frames (list): List of processed frames (numpy arrays)
-        output_video_path (str): Path where the final video should be saved
-        fps (int): Frames per second for the output video
+        frames (list): List of processed frames (numpy arrays).
+        output_video_path (str): Path where the final video should be saved.
+        fps (int): Frames per second for the output video.
+    
+    Returns:
+        None
     """
     if not frames:
         raise ValueError("No frames were provided for merging")
 
+    # Get frame dimensions
     height, width, _ = frames[0].shape
 
-    # Use moviepy to create a video from frames
-    clip = ImageSequenceClip([cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) for frame in frames], fps=fps)
-    clip.write_videofile(output_video_path, codec="libx264")
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for .mp4 files
+    out = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
 
+    # Write each frame to the video file
+    for frame in frames:
+        out.write(frame)
+
+    # Release the video writer
+    out.release()

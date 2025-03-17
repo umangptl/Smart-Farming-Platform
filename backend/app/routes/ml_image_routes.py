@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 import cv2
 import numpy as np
-from app.services.ml_image_service import MLModelService
+from backend.app.services.MLModelProvider import MLModelService
 
 ml_bp = Blueprint("ml", __name__)
 model_service = MLModelService()
