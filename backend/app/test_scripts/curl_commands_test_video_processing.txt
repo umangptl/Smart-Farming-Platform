@@ -1,0 +1,19 @@
+UPLOADING FILES:
+
+curl -X POST http://127.0.0.1:5000/api/videos/upload -F "file=@test_data/short_parking_video.mp4"
+
+curl -X POST http://127.0.0.1:5000/api/videos/upload -F "file=@test_data/cattle_short_video.mp4"
+
+curl -X POST http://127.0.0.1:5000/api/videos/upload -F "file=@test_data/mask.png"
+
+
+
+PROCESSING VIDEOS:
+
+curl -X POST http://127.0.0.1:5000/api/videos/process ^
+     -H "Content-Type: application/json" ^
+     -d "{\"video_name\": \"short_parking_video.mp4\", \"mask_name\": \"mask.png\", \"model_name\": \"parking_detector\"}"
+
+curl -X POST http://127.0.0.1:5000/api/videos/process ^
+     -H "Content-Type: application/json" ^
+     -d "{\"video_name\": \"cattle_short_video.mp4\", \"model_name\": \"animal_detector\"}"

@@ -39,3 +39,10 @@ migrations/
 # Ignore all files created during Docker build (if applicable)
 Dockerfile*
 docker-compose.yml
+
+# Ignore uploaded and processed files
+app/static/
+app/uploads/
+
+# Ignore YOLOv8n.pt model
+YOLOv8n.pt

@@ -1,4 +1,17 @@
-# app/config.py
 import os
 
-SECRET_KEY = os.environ.get('SECRET_KEY') or 'your_default_secret_key'
+class Config:
+    UPLOAD_FOLDER = os.path.join(os.getcwd(), "app/uploads")
+    STATIC_FOLDER = os.path.join(os.getcwd(), "app/static")
+    IMAGE_MODELS = {
+        'parking_detector': {
+            'type':'local',
+            'local_path': os.path.join(os.getcwd(), "app/ai_models/model_normalized_30_30.keras")
+        },
+        'animal_detector': {
+            'type': 'yolo',
+            'model_name': 'yolov8n.pt'
+        }
+    } 
+    ALLOWED_EXTENSIONS = {"mp4", "avi", "mov"}
+    
