@@ -53,6 +53,7 @@ pytz==2025.1
 PyYAML==6.0.2
 requests==2.32.3
 rich==13.9.4
+scikit-image~=0.25.2
 scipy==1.15.2
 seaborn==0.13.2
 six==1.17.0
@@ -61,7 +62,7 @@ sympy==1.13.1
 tensorboard==2.19.0
 tensorboard-data-server==0.7.2
 tensorflow==2.19.0
-tensorflow-io-gcs-filesystem==0.31.0
+#tensorflow-io-gcs-filesystem==0.31.0
 termcolor==2.5.0
 torch==2.6.0
 torchvision==0.21.0

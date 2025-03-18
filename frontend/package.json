@@ -10,6 +10,7 @@
     "chokidar": "^4.0.3",
     "gulp": "4.0.2",
     "gulp-append-prepend": "1.0.9",
+    "hls.js": "^1.0.3-0.canary.7275",
     "react": "17.0.2",
     "react-icons": "^5.4.0",
     "react-beautiful-dnd": "^13.1.1",
