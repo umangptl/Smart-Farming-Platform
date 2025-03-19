@@ -35,14 +35,14 @@ ml_dtypes==0.5.1
 mpmath==1.3.0
 namex==0.0.8
 networkx==3.4.2
-numpy==2.1.1
+numpy>= 1.26.4
 opencv-python==4.11.0.86
 opt_einsum==3.4.0
 optree==0.14.1
 packaging==24.2
 pandas==2.2.3
-pillow==11.1.0
-protobuf==5.29.3
+pillow>=10.4.0
+protobuf>=4.25.6
 psutil==7.0.0
 py-cpuinfo==9.0.0
 Pygments==2.19.1

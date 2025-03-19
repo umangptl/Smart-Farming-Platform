@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
+import { Button } from "react-bootstrap";
 import "leaflet/dist/leaflet.css";
 
 // react-bootstrap components
@@ -180,9 +181,10 @@ const Weather = () => {
                 />
               </label>
               <button
+                variant="primary"
                 type="submit"
                 style={{
-                  padding: "0px",
+                  padding: "8px 10px",
                   flexShrink: "0",
                   marginLeft: "10px",
                   marginTop: "10px",
@@ -223,7 +225,7 @@ const Weather = () => {
 
                 {/* Middle Section: Current Temperature */}
                 <h2 style={{ margin: 0, textAlign: "right" }}>
-                  {weatherData.temperature.current}°F
+                  {Math.round(weatherData.temperature.current)}°F
                 </h2>
 
                 {/* Bottom Section */}
