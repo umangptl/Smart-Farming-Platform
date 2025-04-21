@@ -1,42 +1,42 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import Hls from "hls.js";
 
-const LiveStream = () => {
-  const [streams, setStreams] = useState([]);
-  const [selectedStream, setSelectedStream] = useState(null);
-  const videoRef = React.useRef(null);
+const LiveStream = ({ url }) => {
+  const videoRef = useRef(null);
 
   useEffect(() => {
-    fetch("http://localhost:5000/list_streams")
-      .then((res) => res.json())
-      .then((data) => setStreams(Object.entries(data)))
-      .catch((err) => console.error("Error fetching streams:", err));
-  }, []);
+    if (!url || !videoRef.current) return;
 
-  useEffect(() => {
-    if (selectedStream && Hls.isSupported()) {
-      const hls = new Hls();
-      hls.loadSource(selectedStream);
+    let hls;
+    if (Hls.isSupported()) {
+      hls = new Hls();
+      hls.loadSource(url);
       hls.attachMedia(videoRef.current);
+    } else if (videoRef.current.canPlayType("application/vnd.apple.mpegurl")) {
+      videoRef.current.src = url;
+      videoRef.current.load();
     }
-  }, [selectedStream]);
+
+    return () => {
+      if (hls) {
+        hls.destroy();
+      }
+      // clear video source
+      if (videoRef.current) {
+        videoRef.current.src = "";
+      }
+    };
+  }, [url]);
 
   return (
-    <div>
-        <div>
-      <select onChange={(e) => setSelectedStream(e.target.value)} defaultValue="">
-        <option value="" disabled>Select a Stream</option>
-        {streams.map(([id, data]) => (
-          <option key={id} value={"http://localhost:5000"+data.hls_url}>
-            {id}
-          </option>
-        ))}
-      </select>
-      </div>
-      {selectedStream && (
-        <video ref={videoRef} controls autoPlay muted style={{ width: "100%" }} />
-      )}
-    </div>
+    <video
+      ref={videoRef}
+      controls
+      autoPlay
+      muted
+      crossOrigin="anonymous"
+      style={{ width: "100%", height: "auto" }}
+    />
   );
 };
 

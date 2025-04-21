@@ -1,9 +1,13 @@
-import os
+import os, time
+import shutil
+
 import cv2
 import subprocess
 import threading
-from flask import jsonify, send_from_directory, Blueprint
+from flask import jsonify, send_from_directory, Blueprint, request, abort
 from ultralytics import YOLO
+from app.utils.db_util import db
+from app.models.stream import Stream
 
 surveillance_bp = Blueprint('surveillance', __name__)
 
@@ -110,25 +114,89 @@ def process_video(video_path, stream_id):
     ffmpeg_process.stdin.close()
     ffmpeg_process.wait()
 
+@surveillance_bp.route('/stream', methods=['GET'])
+def get_streams():
+    try:
+        streams = Stream.query.all()
+        return jsonify([stream.to_dict() for stream in streams]), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch streams: {str(e)}"}), 500
+
+@surveillance_bp.route('/stream', methods=['POST'])
+def create_task():
+    try:
+        data = request.json
+        new_stream = Stream(
+            name=data.get('name'),
+            url=data.get('url')
+        )
+        db.session.add(new_stream)
+        db.session.commit()
+        return jsonify(new_stream.to_dict()), 201
+    except Exception as e:
+        return jsonify({"error": f"Failed to create stream: {str(e)}"}), 500
 
 @surveillance_bp.route("/start_stream", methods=["POST"])
 def start_stream():
-    video_url = os.getenv("STREAM_URL", "")
+    data = request.get_json() or {}
+    video_url = data.get("url", "").strip()
     if not video_url:
         return jsonify({"error": "No video URL provided"}), 400
 
-    stream_id = "Stream-1"
-    threading.Thread(target=process_video, args=(video_url, stream_id), daemon=True).start()
-    active_streams[stream_id] = {"video_url": video_url, "hls_url": f"/hls/{stream_id}/stream.m3u8"}
-    return jsonify({"stream_id": stream_id, "hls_url": f"http://localhost:5000/hls/{stream_id}/stream.m3u8"}), 200
+    stream_id = data.get("stream_id") or f"stream"
+
+    threading.Thread(
+        target=process_video,
+        args=(video_url, stream_id),
+        daemon=True
+    ).start()
+
+    # Register as active
+    active_streams[stream_id] = {
+        "video_url": video_url,
+        "hls_url": f"/hls/{stream_id}/stream.m3u8"
+    }
+
+    plist = os.path.join(OUTPUT_DIR, stream_id, "stream.m3u8")
+    while not os.path.exists(plist):
+        time.sleep(0.2)
+
+    return jsonify({
+        "stream_id": stream_id,
+        "hls_url": f"http://localhost:5000/hls/{stream_id}/stream.m3u8"
+    }), 200
+
+@surveillance_bp.route('/stop_stream/<stream_id>', methods=['POST'])
+def stop_stream(stream_id):
+    info = active_streams.get(stream_id)
+    if not info:
+        abort(404, description="Stream not found")
+    proc = info.get('process')
+    if proc and proc.poll() is None:
+        proc.terminate()
+        proc.wait(timeout=5)
+    info['status'] = 'stopped'
+    # Delete HLS files
+    folder = os.path.join(OUTPUT_DIR, stream_id)
+    if os.path.isdir(folder):
+        shutil.rmtree(folder)
+    return jsonify({"success": True, "status": info['status']}), 200
+
+
+@surveillance_bp.route('/stream/<stream_id>', methods=['DELETE'])
+def delete_stream(stream_id):
+    # Remove from database
+    try:
+        db_stream = Stream.query.filter_by(id=stream_id).first()
+        if db_stream:
+            db.session.delete(db_stream)
+            db.session.commit()
+    except Exception:
+        pass
+    return jsonify({"success": True}), 200
 
 
 @surveillance_bp.route('/hls/<stream_id>/<path:filename>', methods=["GET"])
 def serve_hls(stream_id, filename):
     directory = os.path.abspath(os.path.join(OUTPUT_DIR, stream_id))
     return send_from_directory(directory, filename)
-
-
-@surveillance_bp.route("/list_streams", methods=["GET"])
-def list_streams():
-    return jsonify(active_streams)
