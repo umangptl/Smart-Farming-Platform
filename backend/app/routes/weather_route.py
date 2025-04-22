@@ -220,3 +220,21 @@ def get_daily_forecast():
 
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+@weather_bp.route('/dashboard', methods=['GET'])
+def get_dashboard_temperature():
+    try:
+        params = {'q': 'San Jose', 'appid': API_KEY, 'units': 'Imperial'}
+        response = requests.get(BASE_URL, params=params)
+
+        if response.status_code != 200:
+            raise Exception(f"API error: {response.json().get('message', 'Unknown error')}")
+
+        data = response.json()
+        temperature = round(data['main']['temp'])
+        return jsonify({"temperature": f"{temperature}°F"})
+
+    except Exception as e:
+        print(f"Error fetching San Jose temperature: {e}")
+        return jsonify({"temperature": "N/A"})

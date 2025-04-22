@@ -96,3 +96,16 @@ def get_user_tasks(user_id):
         return jsonify([task.to_dict() for task in tasks])
     except Exception as e:
         return jsonify({"error": f"Failed to fetch tasks for user {user_id}: {str(e)}"}), 500
+
+@task_bp.route('/tasks/dashboard', methods=['GET'])
+def get_task_stats():
+    try:
+        total_tasks = Task.query.count()
+        completed_tasks = Task.query.filter_by(status='Completed').count()
+        return jsonify({
+            "completed": completed_tasks,
+            "total": total_tasks,
+            "progress": f"{completed_tasks}/{total_tasks}"
+        })
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch task stats: {str(e)}"}), 500

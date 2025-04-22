@@ -1,11 +1,12 @@
 import Dashboard from "views/Dashboard.js";
 import Surveillance from "views/Surveillance";
+import OCR_Detection from "views/OCR_Detection";
 import Weather from "views/Weather.js";
 import Tasks from "views/Tasks";
 import Inventory from "views/Inventory";
 import Notifications from "views/Notifications.js";
 import User from "views/UserProfile";
-import ModelTestPage from "views/ModelTestPage"
+import ModelTestPage from "views/ModelTestPage";
 
 const dashboardRoutes = [
   {
@@ -20,6 +21,13 @@ const dashboardRoutes = [
     name: "Surveillance",
     icon: "nc-icon nc-cctv",
     component: Surveillance,
+    layout: "/admin",
+  },
+  {
+    path: "/OCR_Detection",
+    name: "OCR_Detection",
+    icon: "nc-icon nc-camera-20",
+    component: OCR_Detection,
     layout: "/admin",
   },
   {

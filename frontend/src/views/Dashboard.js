@@ -1,10 +1,215 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { Link } from "react-router-dom";
 import ChartistGraph from "react-chartist";
-
-// react-bootstrap components
-import { Card, Container, Row, Col } from "react-bootstrap";
+import { Card, Container, Row, Col, Form } from "react-bootstrap";
 
 function Dashboard() {
+  const [temperature, setTemperature] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [taskProgress, setTaskProgress] = useState(null);
+  const [livestockCount, setLivestockCount] = useState(null);
+  const [livestockPieData, setLivestockPieData] = useState({
+    labels: [],
+    series: [],
+    types: [],
+  });
+  const colorClasses = [
+    "text-info",
+    "text-danger",
+    "text-warning",
+    "text-success",
+    "text-primary",
+    "text-secondary",
+  ];
+  const [purchaseTrendData, setPurchaseTrendData] = useState({
+    labels: [],
+    series: [],
+  });
+  const [purchaseTrendTypes, setLivestockLineLabels] = useState([]);
+  const [healthStatusData, setHealthStatusData] = useState({
+    labels: [],
+    series: [],
+  });
+  const [healthTypes, setHealthTypes] = useState([]);
+  const [breedingPieData, setBreedingPieData] = useState({
+    labels: [],
+    series: [],
+  });
+  const [selectedChart, setSelectedChart] = useState("breeding");
+  const [donutData, setDonutData] = useState({ labels: [], series: [] });
+  const [donutLegend, setDonutLegend] = useState([]);
+  const chartOptions = [
+    { key: "breeding", label: "Breeding Status" },
+    { key: "cattle", label: "Cattle Breakdown" },
+    { key: "horse", label: "Horse Breakdown" },
+    { key: "sheep", label: "Sheep Breakdown" },
+  ];
+
+  useEffect(() => {
+    const fetchTemperature = async () => {
+      try {
+        const res = await axios.get("http://127.0.0.1:5000/dashboard");
+        setTemperature(res.data.temperature);
+      } catch (err) {
+        console.error("Failed to fetch temperature", err);
+        setTemperature("N/A");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const fetchTasks = async () => {
+      try {
+        const res = await axios.get("http://127.0.0.1:5000/tasks/dashboard");
+        setTaskProgress(res.data.progress);
+      } catch (err) {
+        console.error("Failed to fetch tasks:", err);
+        setTaskProgress("N/A");
+      }
+    };
+
+    const fetchLivestock = async () => {
+      try {
+        const res = await axios.get(
+          "http://127.0.0.1:5000/livestock/dashboard"
+        );
+        setLivestockCount(res.data.total_livestock);
+      } catch (err) {
+        console.error("Failed to fetch livestock count:", err);
+        setLivestockCount("N/A");
+      }
+    };
+
+    const fetchLivestockByType = async () => {
+      try {
+        const response = await axios.get(
+          "http://127.0.0.1:5000/livestock/dashboard/type"
+        );
+
+        const typeCounts = response.data;
+        const total = Object.values(typeCounts).reduce((a, b) => a + b, 0);
+
+        const labels = Object.values(typeCounts).map(
+          (count) => `${Math.round((count / total) * 100)}%`
+        );
+        const series = Object.values(typeCounts);
+        const types = Object.keys(typeCounts);
+
+        setLivestockPieData({ labels, series, types });
+      } catch (err) {
+        console.error("Failed to load livestock pie data:", err);
+      }
+    };
+
+    const fetchPurchaseTrend = async () => {
+      try {
+        const res = await axios.get(
+          "http://127.0.0.1:5000/livestock/dashboard/purchase_trend"
+        );
+        const raw = res.data;
+
+        const dateMap = {};
+        const typesSet = new Set();
+
+        raw.forEach((entry) => {
+          const date = entry.date;
+          dateMap[date] = dateMap[date] || {};
+          Object.keys(entry).forEach((key) => {
+            if (key !== "date") {
+              dateMap[date][key] = entry[key];
+              typesSet.add(key);
+            }
+          });
+        });
+
+        const sortedDates = Object.keys(dateMap).sort();
+        const types = Array.from(typesSet);
+
+        const series = types.map((type) => ({
+          name: type,
+          data: sortedDates.map((date) => dateMap[date][type] || 0),
+        }));
+
+        setLivestockLineLabels(types);
+        setPurchaseTrendData({
+          labels: sortedDates,
+          series: series.map((s) => s.data),
+        });
+      } catch (err) {
+        console.error("Failed to fetch purchase trend data:", err);
+      }
+    };
+
+    const fetchHealthStatus = async () => {
+      try {
+        const res = await axios.get(
+          "http://127.0.0.1:5000/livestock/dashboard/health-status"
+        );
+        const raw = res.data;
+
+        const labels = raw.map((entry) => entry.health_status);
+        const livestockTypes = Object.keys(raw[0]).filter(
+          (key) => key !== "health_status"
+        );
+
+        const series = livestockTypes.map((type) =>
+          raw.map((entry) => entry[type] || 0)
+        );
+
+        setHealthStatusData({
+          labels,
+          series,
+        });
+
+        setHealthTypes(livestockTypes);
+      } catch (err) {
+        console.error("Error loading health status chart", err);
+      }
+    };
+
+    const fetchDonutChart = async (type) => {
+      let url = "";
+
+      if (type === "breeding") {
+        url = "http://127.0.0.1:5000/livestock/dashboard/breeding-status";
+      } else {
+        url = `http://127.0.0.1:5000/livestock/dashboard/breeds?type=${type}`;
+      }
+
+      try {
+        const res = await axios.get(url);
+        const raw = res.data;
+        const total = raw.reduce((sum, item) => sum + item.count, 0);
+        const labels = raw.map(
+          (item) => `${Math.round((item.count / total) * 100)}%`
+        );
+        const series = raw.map((item) => item.count);
+        const legend = raw.map(
+          (item, index) =>
+            item.breeding_status ||
+            item.breed_counts ||
+            item.label ||
+            item.status
+        );
+        console.log("Legend array:", legend);
+
+        setDonutData({ labels, series });
+        setDonutLegend(legend);
+      } catch (err) {
+        console.error("Chart fetch failed:", err);
+      }
+    };
+
+    fetchTemperature();
+    fetchTasks();
+    fetchLivestock();
+    fetchLivestockByType();
+    fetchPurchaseTrend();
+    fetchHealthStatus();
+    fetchDonutChart(selectedChart);
+  }, [selectedChart]);
+
   return (
     <>
       <Container fluid>
@@ -32,14 +237,21 @@ function Dashboard() {
                       <p className="card-category" style={{ color: "black" }}>
                         Temparature
                       </p>
-                      <Card.Title as="h4">58°F</Card.Title>
+                      <Card.Title as="h4">
+                        {isLoading ? "Loading..." : temperature}
+                      </Card.Title>
                     </div>
                   </Col>
                 </Row>
               </Card.Body>
               <Card.Footer>
                 <hr></hr>
-                View More →
+                <Link
+                  to="/admin/weather"
+                  style={{ textDecoration: "none", color: "black" }}
+                >
+                  View More →
+                </Link>
               </Card.Footer>
             </Card>
           </Col>
@@ -66,14 +278,21 @@ function Dashboard() {
                       <p className="card-category" style={{ color: "black" }}>
                         Tasks
                       </p>
-                      <Card.Title as="h4">2/10</Card.Title>
+                      <Card.Title as="h4">
+                        {isLoading ? "Loading..." : taskProgress}
+                      </Card.Title>
                     </div>
                   </Col>
                 </Row>
               </Card.Body>
               <Card.Footer>
                 <hr></hr>
-                View More →
+                <Link
+                  to="/admin/tasks"
+                  style={{ textDecoration: "none", color: "black" }}
+                >
+                  View More →
+                </Link>
               </Card.Footer>
             </Card>
           </Col>
@@ -100,14 +319,21 @@ function Dashboard() {
                       <p className="card-category" style={{ color: "black" }}>
                         Total livestock
                       </p>
-                      <Card.Title as="h4">1440</Card.Title>
+                      <Card.Title as="h4">
+                        {isLoading ? "Loading..." : livestockCount}
+                      </Card.Title>
                     </div>
                   </Col>
                 </Row>
               </Card.Body>
               <Card.Footer>
                 <hr></hr>
-                View More →
+                <Link
+                  to="/admin/inventory"
+                  style={{ textDecoration: "none", color: "black" }}
+                >
+                  View More →
+                </Link>
               </Card.Footer>
             </Card>
           </Col>
@@ -141,53 +367,70 @@ function Dashboard() {
               </Card.Body>
               <Card.Footer>
                 <hr></hr>
-                View More →
+                <Link
+                  to="/admin/surveillance"
+                  style={{ textDecoration: "none", color: "black" }}
+                >
+                  View More →
+                </Link>
               </Card.Footer>
             </Card>
           </Col>
         </Row>
         <Row>
+          {/* livestock line chart */}
           <Col md="8">
             <Card>
               <Card.Header>
-                <Card.Title as="h4">Important chart</Card.Title>
-                <p className="card-category">Total Inventory</p>
+                <Card.Title as="h4">Cumulative Livestock</Card.Title>
+                <p className="card-category">
+                  Inventory Trends by Purchase Date
+                </p>
               </Card.Header>
               <Card.Body>
+                <div className="legend">
+                  {purchaseTrendTypes.map((type, index) => (
+                    <span key={type}>
+                      <i
+                        className={`fas fa-circle ${
+                          colorClasses[index % colorClasses.length]
+                        }`}
+                      ></i>{" "}
+                      {type}{" "}
+                    </span>
+                  ))}
+                </div>
+
                 <div className="ct-chart" id="chartHours">
                   <ChartistGraph
-                    data={{
-                      labels: [
-                        "2007",
-                        "2008",
-                        "2009",
-                        "2010",
-                        "2011",
-                        "2012",
-                        "2013",
-                        "2014",
-                      ],
-                      series: [
-                        [287, 385, 490, 492, 554, 586, 698, 695],
-                        [67, 152, 143, 240, 287, 335, 435, 437],
-                        [23, 113, 67, 108, 190, 239, 307, 308],
-                      ],
-                    }}
+                    data={purchaseTrendData}
                     type="Line"
                     options={{
-                      low: 0,
-                      high: 800,
-                      showArea: false,
-                      height: "245px",
+                      fullWidth: true,
+                      showPoint: true,
+                      height: "300px",
+                      chartPadding: { right: 40 },
+                      axisY: {
+                        onlyInteger: true,
+                        offset: 30,
+                        labelInterpolationFnc: function (value) {
+                          return Math.round(value);
+                        },
+                      },
                       axisX: {
                         showGrid: false,
-                      },
-                      lineSmooth: true,
-                      showLine: true,
-                      showPoint: true,
-                      fullWidth: true,
-                      chartPadding: {
-                        right: 50,
+                        labelInterpolationFnc: function (value, index, labels) {
+                          const interval = Math.ceil(labels.length / 5);
+                          if (index % interval === 0) {
+                            const date = new Date(value);
+                            const month = date.toLocaleString("en-US", {
+                              month: "short",
+                            });
+                            const year = date.getFullYear();
+                            return `${month}\u00A0${year}`;
+                          }
+                          return null;
+                        },
                       },
                     }}
                     responsiveOptions={[
@@ -195,8 +438,12 @@ function Dashboard() {
                         "screen and (max-width: 640px)",
                         {
                           axisX: {
-                            labelInterpolationFnc: function (value) {
-                              return value[0];
+                            labelInterpolationFnc: function (
+                              value,
+                              index,
+                              labels
+                            ) {
+                              return index % 2 === 0 ? value.slice(5) : null;
                             },
                           },
                         },
@@ -206,25 +453,20 @@ function Dashboard() {
                 </div>
               </Card.Body>
               <Card.Footer>
-                <div className="legend">
-                  <i className="fas fa-circle text-info"></i>
-                  Cows <i className="fas fa-circle text-danger"></i>
-                  Sheeps <i className="fas fa-circle text-warning"></i>
-                  Chickens
-                </div>
-                <hr></hr>
+                <hr />
                 <div className="stats">
-                  <i className="fas fa-history"></i>
-                  Updated 3 minutes ago
+                  <i className="fas fa-history"></i> Updated 3 minutes ago
                 </div>
               </Card.Footer>
             </Card>
           </Col>
+
+          {/* pie chart */}
           <Col md="4">
             <Card>
               <Card.Header>
                 <Card.Title as="h4">Inventory Statistics</Card.Title>
-                <p className="card-category">Total Distribution</p>
+                <p className="card-category">Total Livestock Distribution</p>
               </Card.Header>
               <Card.Body>
                 <div
@@ -233,17 +475,26 @@ function Dashboard() {
                 >
                   <ChartistGraph
                     data={{
-                      labels: ["60%", "40%", "20%"],
-                      series: [60, 40, 20],
+                      labels: livestockPieData.labels,
+                      series: livestockPieData.series,
                     }}
                     type="Pie"
+                    options={{
+                      showLabel: true,
+                    }}
                   />
                 </div>
                 <div className="legend">
-                  <i className="fas fa-circle text-info"></i>
-                  Cows <i className="fas fa-circle text-danger"></i>
-                  Sheeps <i className="fas fa-circle text-warning"></i>
-                  chickens
+                  {livestockPieData.types.map((type, index) => (
+                    <span key={type}>
+                      <i
+                        className={`fas fa-circle ${
+                          colorClasses[index % colorClasses.length]
+                        }`}
+                      ></i>{" "}
+                      {type}{" "}
+                    </span>
+                  ))}
                 </div>
                 <hr></hr>
                 <div className="stats">
@@ -253,50 +504,85 @@ function Dashboard() {
               </Card.Body>
             </Card>
           </Col>
-        </Row>
-        <Row>
-          <Col md="6">
+
+          {/* donut chart  */}
+          <Col md="4">
+            <Card>
+              <Card.Header className="d-flex justify-content-between align-items-center">
+                <div>
+                  <Card.Title as="h4">Breed/ Breeding Chart</Card.Title>
+                  <p className="card-category">Dynamic Distribution</p>
+                </div>
+                <Form.Select
+                  size="sm"
+                  value={selectedChart}
+                  onChange={(e) => setSelectedChart(e.target.value)}
+                  style={{ width: "120px" }}
+                >
+                  {chartOptions.map((opt) => (
+                    <option key={opt.key} value={opt.key}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Card.Header>
+
+              <Card.Body>
+                <div className="ct-chart ct-perfect-fourth">
+                  <ChartistGraph
+                    data={donutData}
+                    type="Pie"
+                    options={{
+                      donut: true,
+                      donutWidth: 50,
+                      startAngle: 0,
+                      showLabel: true,
+                    }}
+                  />
+                </div>
+
+                <div className="legend">
+                  {donutLegend.map((label, index) => (
+                    <span key={`${label}-${index}`}>
+                      <i
+                        className={`fas fa-circle ${
+                          colorClasses[index % colorClasses.length]
+                        }`}
+                      ></i>
+                      {label} {""}
+                    </span>
+                  ))}
+                </div>
+
+                <hr />
+                <div className="stats">
+                  <i className="far fa-clock"></i> updated dynamically
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+
+          {/* bar chart */}
+          <Col md="8">
             <Card>
               <Card.Header>
-                <Card.Title as="h4">Chart Title </Card.Title>
-                <p className="card-category">Comparative Animals</p>
+                <Card.Title as="h4">Health Status </Card.Title>
+                <p className="card-category">Grouped by Livestock Type</p>
               </Card.Header>
               <Card.Body>
                 <div className="ct-chart" id="chartActivity">
                   <ChartistGraph
-                    data={{
-                      labels: [
-                        "Jan",
-                        "Feb",
-                        "Mar",
-                        "Apr",
-                        "Mai",
-                        "Jun",
-                        "Jul",
-                        "Aug",
-                        "Sep",
-                        "Oct",
-                        "Nov",
-                        "Dec",
-                      ],
-                      series: [
-                        [
-                          542, 443, 320, 780, 553, 453, 326, 434, 568, 610, 756,
-                          895,
-                        ],
-                        [
-                          412, 243, 280, 580, 453, 353, 300, 364, 368, 410, 636,
-                          695,
-                        ],
-                      ],
-                    }}
+                    data={healthStatusData}
                     type="Bar"
                     options={{
-                      seriesBarDistance: 10,
+                      seriesBarDistance: 15,
                       axisX: {
                         showGrid: false,
                       },
                       height: "245px",
+                      axisY: {
+                        onlyInteger: true,
+                      },
                     }}
                     responsiveOptions={[
                       [
@@ -316,10 +602,18 @@ function Dashboard() {
               </Card.Body>
               <Card.Footer>
                 <div className="legend">
-                  <i className="fas fa-circle text-info"></i>
-                  Cows <i className="fas fa-circle text-danger"></i>
-                  Sheeps
+                  {healthTypes.map((type, index) => (
+                    <span key={type}>
+                      <i
+                        className={`fas fa-circle ${
+                          colorClasses[index % colorClasses.length]
+                        }`}
+                      ></i>{" "}
+                      {type}{" "}
+                    </span>
+                  ))}
                 </div>
+
                 <hr></hr>
                 <div className="stats">
                   <i className="fas fa-check"></i>

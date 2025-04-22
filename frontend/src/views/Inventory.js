@@ -1,9 +1,27 @@
 import { useContext, useState, useEffect } from "react";
-import { Card, Container, Row, Col, ProgressBar, Alert, Button, Modal, Form, Dropdown } from "react-bootstrap";
+import {
+  Card,
+  Container,
+  Row,
+  Col,
+  ProgressBar,
+  Alert,
+  Button,
+  Modal,
+  Form,
+  Dropdown,
+} from "react-bootstrap";
 import TwoColumnGrid from "components/Inventory_page/TwoColumnGrid";
 import useLivestock from "hooks/useLivestock";
-import { FaCalendarAlt, FaMoneyBillWave, FaVenusMars, FaBirthdayCake, FaHorse, FaPlus } from "react-icons/fa";
-import { FaCow } from "react-icons/fa6"
+import {
+  FaCalendarAlt,
+  FaMoneyBillWave,
+  FaVenusMars,
+  FaBirthdayCake,
+  FaHorse,
+  FaPlus,
+} from "react-icons/fa";
+import { FaCow } from "react-icons/fa6";
 import { GiBullHorns, GiSheep } from "react-icons/gi";
 import { MdHealthAndSafety } from "react-icons/md";
 
@@ -19,19 +37,20 @@ import { updateLivestock } from "api/livestockApi";
 import { deleteLivestock } from "api/livestockApi";
 
 function TableList() {
-
-  const enums = useContext(EnumsContext)
+  const enums = useContext(EnumsContext);
 
   // Hook to fetch livestock
-  const {livestock, setLivestock, loading, error} = useLivestock([]);
+  const { livestock, setLivestock, loading, error } = useLivestock([]);
 
   const { paddocks } = usePaddock([]);
 
-  const [ sortedPaddocks, setSortedPaddocks ] = useState([]);
+  const [sortedPaddocks, setSortedPaddocks] = useState([]);
   // Effect: Sort paddocks when data updates
   useEffect(() => {
     if (paddocks.length > 0) {
-      setSortedPaddocks([...paddocks].sort((a, b) => a.paddockID - b.paddockID));
+      setSortedPaddocks(
+        [...paddocks].sort((a, b) => a.paddockID - b.paddockID)
+      );
     }
   }, [paddocks]); // Runs only when paddocks updates
 
@@ -63,8 +82,8 @@ function TableList() {
     gender: "male",
     // livestock_name: "",   CAN BE NULLABLE
     weight: "",
-    paddockID: ""
-  }
+    paddockID: "",
+  };
 
   // Form state for new cattle
   const [newCattle, setNewCattle] = useState(defaultCattle);
@@ -83,11 +102,15 @@ function TableList() {
 
   const handleDelete = (livestockID) => {
     // Ask for confirmation before deleting
-    const confirmDelete = window.confirm("Are you sure you want to delete this livestock?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this livestock?"
+    );
     if (!confirmDelete) return;
-  
+
     // Remove livestock by filtering out the deleted one
-    setLivestock(livestock.filter(animal => animal.livestockID !== livestockID));
+    setLivestock(
+      livestock.filter((animal) => animal.livestockID !== livestockID)
+    );
     deleteLivestock(livestockID);
   };
 
@@ -95,85 +118,93 @@ function TableList() {
   const handleSaveCattle = () => {
     if (isEditing) {
       // Update existing livestock
-      setLivestock(livestock.map(item => 
-        item.livestockID === editingCattleId ? { ...newCattle } : item
-      ));
-      updateLivestock(editingCattleId, newCattle)
+      setLivestock(
+        livestock.map((item) =>
+          item.livestockID === editingCattleId ? { ...newCattle } : item
+        )
+      );
+      updateLivestock(editingCattleId, newCattle);
     } else {
       // Add new livestock
       const newEntry = { ...newCattle, livestockID: livestock.length + 1 };
-      setLivestock([...livestock, newEntry]); 
+      setLivestock([...livestock, newEntry]);
       createLivestock(newCattle); // API call
     }
-  
+
     setShowModal(false); // Close modal
     setIsEditing(false); // Reset editing state
     setNewCattle(defaultCattle); // Reset form
   };
 
   // Get Unique Breeds Dynamically
-  const breedOptions = [...new Set(livestock
-    .map((animal) => animal.breed)
-    .sort((a,b) => a.localeCompare(b))
-  )];
+  const breedOptions = [
+    ...new Set(
+      livestock.map((animal) => animal.breed).sort((a, b) => a.localeCompare(b))
+    ),
+  ];
 
   // Function to calculate age based on Date of Birth
   const calculateAgeString = (birth_date) => {
-    const dob = new Date(birth_date)
+    const dob = new Date(birth_date);
     const now = new Date();
-    const days = Math.floor((now - dob) / (1000 * 60 * 60 * 24))
-    
+    const days = Math.floor((now - dob) / (1000 * 60 * 60 * 24));
+
     if (days < 7) {
-      return `${days} day${days !== 1 ? 's' : 's'}`
+      return `${days} day${days !== 1 ? "s" : "s"}`;
     }
 
     const weeks = Math.floor(days / 7);
     if (days < 365) {
-      return `${weeks} week${weeks !== 1 ? 's' : ''}`
+      return `${weeks} week${weeks !== 1 ? "s" : ""}`;
     }
 
-    const months = days / 365.25 * 12;
+    const months = (days / 365.25) * 12;
     if (months < 36) {
-      return `${months.toFixed(1)} month${months !== 1 ? 's' : ''}`
+      return `${months.toFixed(1)} month${months !== 1 ? "s" : ""}`;
     }
 
     const years = days / 365.25;
-    return `${years.toFixed(1)} year${years !== 1 ? 's' : ''}`
+    return `${years.toFixed(1)} year${years !== 1 ? "s" : ""}`;
   };
-
-
 
   // 🏷️ Apply Filters
   const filteredLivestock = livestock.filter((animal) => {
-    const dob = new Date(animal.dob)
+    const dob = new Date(animal.dob);
     const now = new Date();
-    const age = Math.floor((now - dob) / (1000 * 60 * 60 * 24 * 365.25) )
-  
+    const age = Math.floor((now - dob) / (1000 * 60 * 60 * 24 * 365.25));
+
     return (
       (typeFilter ? animal.type === typeFilter : true) &&
-      (breedingStatusFilter ? animal.breeding_status === breedingStatusFilter : true) &&
+      (breedingStatusFilter
+        ? animal.breeding_status === breedingStatusFilter
+        : true) &&
       (ageFilter
-        ? ageFilter === "<1 years" ? age < 1
-        : ageFilter === "1-3 years" ? age >= 1 && age <= 3
-        : ageFilter === "3+ years" ? age > 3
-        : true
+        ? ageFilter === "<1 years"
+          ? age < 1
+          : ageFilter === "1-3 years"
+          ? age >= 1 && age <= 3
+          : ageFilter === "3+ years"
+          ? age > 3
+          : true
         : true) &&
       (breedFilter ? animal.breed === breedFilter : true)
     );
   });
-  
-  
 
   function formatDate(dateString) {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
 
   const livestockIconMap = {
-    "cattle": <FaCow size={24}/>,
-    "horse": <FaHorse size={24}/>,
-    "sheep": <GiSheep size={24}/>
-  }
+    cattle: <FaCow size={24} />,
+    horse: <FaHorse size={24} />,
+    sheep: <GiSheep size={24} />,
+  };
 
   return (
     <Container fluid>
@@ -196,31 +227,61 @@ function TableList() {
       <Row className="mb-3">
         <Col md={8}>
           <Row>
-            <Col><SelectFilter label="Type" value={typeFilter} options={enums.animalTypeOptions} onSelect={setTypeFilter} /></Col>
-            <Col><SelectFilter label="Breeding Status" value={breedingStatusFilter} options={enums.breedingStatusOptions} onSelect={setBreedingStatusFilter} /></Col>
-            <Col><SelectFilter label="Age" value={ageFilter} options={["<1 years", "1-3 years", "3+ years"]} onSelect={setAgeFilter} /></Col>
-            <Col><SelectFilter label="Breed" value={breedFilter} options={breedOptions} onSelect={setBreedFilter} /></Col>
+            <Col>
+              <SelectFilter
+                label="Type"
+                value={typeFilter}
+                options={enums.animalTypeOptions}
+                onSelect={setTypeFilter}
+              />
+            </Col>
+            <Col>
+              <SelectFilter
+                label="Breeding Status"
+                value={breedingStatusFilter}
+                options={enums.breedingStatusOptions}
+                onSelect={setBreedingStatusFilter}
+              />
+            </Col>
+            <Col>
+              <SelectFilter
+                label="Age"
+                value={ageFilter}
+                options={["<1 years", "1-3 years", "3+ years"]}
+                onSelect={setAgeFilter}
+              />
+            </Col>
+            <Col>
+              <SelectFilter
+                label="Breed"
+                value={breedFilter}
+                options={breedOptions}
+                onSelect={setBreedFilter}
+              />
+            </Col>
           </Row>
         </Col>
         <Col md={3}>
           <Row className=" px-5 d-flex justify-content-around">
-            <Button 
-              variant="secondary" 
-              onClick={() => { setTypeFilter(""); setBreedingStatusFilter(""); setAgeFilter(""); setBreedFilter(""); }}
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setTypeFilter("");
+                setBreedingStatusFilter("");
+                setAgeFilter("");
+                setBreedFilter("");
+              }}
             >
               Reset
             </Button>
           </Row>
         </Col>
         <Col md={1} className="d-flex justify-content-end">
-          <Button 
-            variant="primary" 
-            className="d-flex align-items-center justify-content-center rounded-circle" 
+          <Button
+            variant="primary"
+            className="d-flex align-items-center justify-content-center rounded-circle"
             style={{ width: "40px", height: "40px", padding: "0" }}
-            onClick={() => (
-              setNewCattle(defaultCattle),
-              setShowModal(true)
-            )}
+            onClick={() => (setNewCattle(defaultCattle), setShowModal(true))}
           >
             <FaPlus size={20} />
           </Button>
@@ -241,12 +302,36 @@ function TableList() {
                     </div>
                     <TwoColumnGrid
                       data={[
-                        { icon: <FaCalendarAlt />, label: "Purchase Date", value: <Skeleton width={100} /> },
-                        { icon: <FaMoneyBillWave />, label: "Purchase Price", value: <Skeleton width={80} /> },
-                        { icon: <FaBirthdayCake />, label: "Age", value: <Skeleton width={50} /> },
-                        { icon: <FaVenusMars />, label: "Gender", value: <Skeleton width={60} /> },
-                        { icon: <GiBullHorns />, label: "Breed", value: <Skeleton width={80} /> },
-                        { icon: <FaCow />, label: "Breeding Status", value: <Skeleton width={120} /> },
+                        {
+                          icon: <FaCalendarAlt />,
+                          label: "Purchase Date",
+                          value: <Skeleton width={100} />,
+                        },
+                        {
+                          icon: <FaMoneyBillWave />,
+                          label: "Purchase Price",
+                          value: <Skeleton width={80} />,
+                        },
+                        {
+                          icon: <FaBirthdayCake />,
+                          label: "Age",
+                          value: <Skeleton width={50} />,
+                        },
+                        {
+                          icon: <FaVenusMars />,
+                          label: "Gender",
+                          value: <Skeleton width={60} />,
+                        },
+                        {
+                          icon: <GiBullHorns />,
+                          label: "Breed",
+                          value: <Skeleton width={80} />,
+                        },
+                        {
+                          icon: <FaCow />,
+                          label: "Breeding Status",
+                          value: <Skeleton width={120} />,
+                        },
                       ]}
                     />
                     <div className="mt-3 px-3">
@@ -260,21 +345,24 @@ function TableList() {
           : filteredLivestock.map((animal) => (
               <Col key={animal.livestockID} md={4} sm={6} className="mb-2">
                 <Card className="shadow-sm position-relative">
-                  <Dropdown 
-                    className="position-absolute m-2 no-caret-dropdown"  
-                    style={{ 
+                  <Dropdown
+                    className="position-absolute m-2 no-caret-dropdown"
+                    style={{
                       top: "0",
                       right: "0",
                     }}
                   >
-                    <Dropdown.Toggle 
-                      className="border-0" 
-                      variant="light">
+                    <Dropdown.Toggle className="border-0" variant="light">
                       ⋮
                     </Dropdown.Toggle>
                     <Dropdown.Menu>
-                      <Dropdown.Item onClick={() => handleEdit(animal)}>Edit</Dropdown.Item>
-                      <Dropdown.Item onClick={() => handleDelete(animal.livestockID)} className="text-danger">
+                      <Dropdown.Item onClick={() => handleEdit(animal)}>
+                        Edit
+                      </Dropdown.Item>
+                      <Dropdown.Item
+                        onClick={() => handleDelete(animal.livestockID)}
+                        className="text-danger"
+                      >
                         Delete
                       </Dropdown.Item>
                     </Dropdown.Menu>
@@ -286,17 +374,43 @@ function TableList() {
                           {livestockIconMap[animal.type]}
                         </div>
                         <h5 className="mb-0">{animal.type.toUpperCase()}</h5>
+                        <h5 className="mb-0">
+                          {/* {animal.livestock_name.slice(-4)} */}
+                        </h5>
                       </div>
-                      {/*<h5 className="mb-0">{animal.livestockID}</h5>*/}
                     </div>
                     <TwoColumnGrid
                       data={[
-                        { icon: <FaCalendarAlt />, label: "Purchase Date", value: formatDate(animal.purchase_date) },
-                        { icon: <FaMoneyBillWave />, label: "Purchase Price", value: `$${animal.purchase_price}` },
-                        { icon: <FaBirthdayCake />, label: "Age", value: calculateAgeString(animal.dob) },
-                        { icon: <FaVenusMars />, label: "Gender", value: animal.gender },
-                        { icon: <GiBullHorns />, label: "Breed", value: animal.breed },
-                        { icon: <FaCow />, label: "Breeding Status", value: animal.breeding_status },
+                        {
+                          icon: <FaCalendarAlt />,
+                          label: "Purchase Date",
+                          value: formatDate(animal.purchase_date),
+                        },
+                        {
+                          icon: <FaMoneyBillWave />,
+                          label: "Purchase Price",
+                          value: `$${animal.purchase_price}`,
+                        },
+                        {
+                          icon: <FaBirthdayCake />,
+                          label: "Age",
+                          value: calculateAgeString(animal.dob),
+                        },
+                        {
+                          icon: <FaVenusMars />,
+                          label: "Gender",
+                          value: animal.gender,
+                        },
+                        {
+                          icon: <GiBullHorns />,
+                          label: "Breed",
+                          value: animal.breed,
+                        },
+                        {
+                          icon: <FaCow />,
+                          label: "Breeding Status",
+                          value: animal.breeding_status,
+                        },
                       ]}
                     />
                     <div className="mt-3 px-3">
@@ -331,77 +445,144 @@ function TableList() {
               </Col>
             ))}
       </Row>
-      
+
       {/* Display Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} animation={false}>
+      <Modal
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        animation={false}
+      >
         <Modal.Header closeButton>
           <Modal.Title>Add New Cattle</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <SelectInput label="Type" name="type" value={newCattle.type} options={enums.animalTypeOptions} onChange={handleInputChange} />
+            <SelectInput
+              label="Type"
+              name="type"
+              value={newCattle.type}
+              options={enums.animalTypeOptions}
+              onChange={handleInputChange}
+            />
             <Form.Group>
               <Form.Label>Breed</Form.Label>
-              <Form.Control type="text" name="breed" value={newCattle.breed} onChange={handleInputChange} />
+              <Form.Control
+                type="text"
+                name="breed"
+                value={newCattle.breed}
+                onChange={handleInputChange}
+              />
             </Form.Group>
             <Form.Group>
               <Form.Label>Name</Form.Label>
-              <Form.Control type="text" name="name" value={newCattle.name} onChange={handleInputChange} />
+              <Form.Control
+                type="text"
+                name="name"
+                value={newCattle.name}
+                onChange={handleInputChange}
+              />
             </Form.Group>
             <Form.Group>
               <Form.Label>Purchase Date</Form.Label>
-              <Form.Control type="date" name="purchase_date" value={newCattle.purchase_date} onChange={handleInputChange} />
+              <Form.Control
+                type="date"
+                name="purchase_date"
+                value={newCattle.purchase_date}
+                onChange={handleInputChange}
+              />
             </Form.Group>
             <Form.Group>
               <Form.Label>Purchase Price ($)</Form.Label>
-              <Form.Control type="number" name="purchase_price" value={newCattle.purchase_price} 
+              <Form.Control
+                type="number"
+                name="purchase_price"
+                value={newCattle.purchase_price}
                 onChange={(e) => {
-                  setNewCattle({ ...newCattle, purchase_price: Number(e.target.value) })
+                  setNewCattle({
+                    ...newCattle,
+                    purchase_price: Number(e.target.value),
+                  });
                 }}
               />
             </Form.Group>
             <Form.Group>
               <Form.Label>Weight (kg)</Form.Label>
-              <Form.Control type="number" name="weight" value={newCattle.weight} 
+              <Form.Control
+                type="number"
+                name="weight"
+                value={newCattle.weight}
                 onChange={(e) => {
-                  setNewCattle({ ...newCattle, weight: Number(e.target.value) })
+                  setNewCattle({
+                    ...newCattle,
+                    weight: Number(e.target.value),
+                  });
                 }}
               />
             </Form.Group>
             <Form.Group>
               <Form.Label>Date of Birth</Form.Label>
-              <Form.Control type="date" name="dob" value={newCattle.dob} onChange={handleInputChange} />
+              <Form.Control
+                type="date"
+                name="dob"
+                value={newCattle.dob}
+                onChange={handleInputChange}
+              />
             </Form.Group>
             <Form.Group>
               <Form.Label>Gender</Form.Label>
-              <Form.Control as="select" name="gender" value={newCattle.gender} onChange={handleInputChange}>
-              {enums.genderOptions.map((gender) => (
+              <Form.Control
+                as="select"
+                name="gender"
+                value={newCattle.gender}
+                onChange={handleInputChange}
+              >
+                {enums.genderOptions.map((gender) => (
                   <option value={gender}>{gender}</option>
                 ))}
               </Form.Control>
             </Form.Group>
             <Form.Group>
               <Form.Label>Breeding Status</Form.Label>
-              <Form.Control as="select" name="breeding_status" value={newCattle.breeding_status} onChange={handleInputChange}>
-              {enums.breedingStatusOptions.map((type) => (
+              <Form.Control
+                as="select"
+                name="breeding_status"
+                value={newCattle.breeding_status}
+                onChange={handleInputChange}
+              >
+                {enums.breedingStatusOptions.map((type) => (
                   <option value={type}>{type}</option>
                 ))}
               </Form.Control>
             </Form.Group>
             <Form.Group>
               <Form.Label>Health Status</Form.Label>
-              <Form.Control as="select" name="health_status" value={newCattle.health_status} onChange={handleInputChange}>
-              {enums.healthStatusOptions.map((healthStatus) => (
+              <Form.Control
+                as="select"
+                name="health_status"
+                value={newCattle.health_status}
+                onChange={handleInputChange}
+              >
+                {enums.healthStatusOptions.map((healthStatus) => (
                   <option value={healthStatus}>{healthStatus}</option>
                 ))}
               </Form.Control>
             </Form.Group>
-            <SelectInput label="Paddock" name="paddockID" value={newCattle.paddockID} options={paddockOptions} onChange={handleInputChange} />
+            <SelectInput
+              label="Paddock"
+              name="paddockID"
+              value={newCattle.paddockID}
+              options={paddockOptions}
+              onChange={handleInputChange}
+            />
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-          <Button variant="primary" onClick={handleSaveCattle}>{isEditing? "Update Livestock" : "Add Livestock"}</Button>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleSaveCattle}>
+            {isEditing ? "Update Livestock" : "Add Livestock"}
+          </Button>
         </Modal.Footer>
       </Modal>
     </Container>
