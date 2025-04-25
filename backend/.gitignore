@@ -48,4 +48,4 @@ app/uploads/
 *.pt
 
 # Ignore uploaded and processed files
-# app/data/
+app/data/
