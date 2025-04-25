@@ -41,8 +41,11 @@ Dockerfile*
 docker-compose.yml
 
 # Ignore uploaded and processed files
-app/static/
+app/results/
 app/uploads/
 
 # Ignore YOLOv8n.pt model
-YOLOv8n.pt
+*.pt
+
+# Ignore uploaded and processed files
+app/data/

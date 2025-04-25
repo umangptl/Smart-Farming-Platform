@@ -2,9 +2,12 @@ from flask import Blueprint, request, jsonify, send_from_directory
 import os
 from werkzeug.utils import secure_filename
 from app.config import Config
-from app.services.video_processor import process_video
+from app.video.processor import process_video_logic
+from app.repository.video_config_repository import save_config_for_video_inference, get_config_for_video_inference
+from app.inference.model_factory import build_model_from_config
 
 video_bp = Blueprint("videos", __name__)
+
 
 # Allowed extensions
 def allowed_file(filename):
@@ -13,51 +16,70 @@ def allowed_file(filename):
 # Upload Video API
 @video_bp.route("/upload", methods=["POST"])
 def upload_video():
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
+    if "video" not in request.files:
+        return jsonify({"error": "Missing video file"}), 400
 
-    file = request.files["file"]
-    if file.filename == "":
-        return jsonify({"error": "No selected file"}), 400
+    video_file = request.files["video"]
+    if not video_file or video_file.filename == "":
+        return jsonify({"error": "Empty video filename"}), 400
+    if not allowed_file(video_file.filename):
+        return jsonify({"error": "Invalid file type"}), 400
 
-    # if not allowed_file(file.filename):
-    #     return jsonify({"error": "Invalid file type"}), 400
-        
-    filename = secure_filename(file.filename)
-    input_video_path = os.path.join(Config.UPLOAD_FOLDER, filename)
-    file.save(input_video_path)
+    # Save video
+    filename = secure_filename(video_file.filename)
+    os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
+    video_path = os.path.join(Config.UPLOAD_FOLDER, filename)
+    video_file.save(video_path)
 
-    return jsonify({"message": "File uploaded successfully", "file_path": input_video_path}), 200
+    return jsonify({"message": "Video uploaded successfully", "video_name": filename}), 200
+
+# === Route 2: Link config to video ===
+@video_bp.route("/configure", methods=["POST"])
+def configure_video():
+    data = request.get_json()
+    video_name = data.get("video_name")
+    config = data.get("config")
+
+    if not video_name or not config:
+        return jsonify({"error": "Missing video_name or config"}), 400
+
+    try:
+        save_config_for_video_inference(video_name, config)
+        return jsonify({"message": f"Config saved for video '{video_name}'"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to save config: {e}"}), 500
 
 # Process Video with ML Model API
 @video_bp.route("/process", methods=["POST"])
 def process():
     data = request.get_json()
     video_name = data.get("video_name")
-    mask_name = data.get("mask_name")
-    model_name = data.get("model_name")  # Default to "parking_detector"
     
     if not video_name:
         return jsonify({"error": "No video name provided"}), 400
     
-    if not model_name:
-        return jsonify({"error": "No model name provided"}), 400
-    
+    # Paths
     video_path = os.path.join(Config.UPLOAD_FOLDER, video_name)
-    mask_path = None if mask_name == None else os.path.join(Config.UPLOAD_FOLDER, mask_name)
-
-    # Process the video using the selected model
+    target_path = os.path.join(Config.RESULT_FOLDER, video_name)
+    
+    # Load saved config
+    config = get_config_for_video_inference(video_name)
+    if not config:
+        return jsonify({"error": f"No config found for video '{video_name}'"}), 404
+    
     try:
-        processed_video_path = process_video(model_name, video_path, mask_path)
+        # Build model and process
+        model = build_model_from_config(config)
+        process_video_logic(video_path, target_path, model, stride=1)
         return jsonify({
-            "message": "Processing complete",
-            "video_url": f"/api/videos/processed/{os.path.basename(processed_video_path)}",
-            "model_used": model_name
-        }), 200
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+            "message": f"Video '{video_name}' processed successfully",
+            "results": model.get_results()
+        })
+    except Exception as e:
+        return jsonify({"error": f"Failed to process video: {str(e)}"}), 500
+    
 
 # Serve Processed Video
 @video_bp.route("/processed/<filename>", methods=["GET"])
 def get_processed_video(filename):
-    return send_from_directory(Config.STATIC_FOLDER, filename)
+    return send_from_directory(Config.RESULT_FOLDER, filename)

@@ -2,7 +2,7 @@ import os
 
 class Config:
     UPLOAD_FOLDER = os.path.join(os.getcwd(), "app/uploads")
-    STATIC_FOLDER = os.path.join(os.getcwd(), "app/static")
+    RESULT_FOLDER = os.path.join(os.getcwd(), "app/results")
     IMAGE_MODELS = {
         'parking_detector': {
             'type':'local',
