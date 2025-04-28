@@ -4,18 +4,37 @@ import numpy as np
 import cv2
 
 class LineCrossCounter(InferenceModule):
-    def __init__(self, model, tracker, trace_annotator, box_annotator, label_annotator, line_zone, line_zone_annotator, selected_class_ids):
+    def __init__(self, model, tracker, trace_annotator, box_annotator, label_annotator, normalized_start, normalized_end, line_zone_annotator, selected_class_ids):
         self.model = model
         self.byte_tracker = tracker
         self.trace_annotator = trace_annotator
         self.box_annotator = box_annotator
         self.label_annotator = label_annotator
-        self.line_zone = line_zone
+        self.normalized_start = normalized_start
+        self.normalized_end = normalized_end
+        self.line_zone = None
         self.line_zone_annotator = line_zone_annotator
         self.selected_class_ids = selected_class_ids
 
+
     def name(self):
         return "line_cross_counter"
+
+
+    def initialize_with_video(self, video_capture: cv2.VideoCapture):
+        width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        start = sv.Point(
+            self.normalized_start["x"] * width,
+            self.normalized_start["y"] * height,
+        )
+        end = sv.Point(
+            self.normalized_end["x"] * width,
+            self.normalized_end["y"] * height,
+        )
+        self.line_zone = sv.LineZone(start=start, end=end)
+
 
     def detect_and_annotate_crossings(self, frame: np.ndarray) -> np.ndarray:
         # frame = cv2.resize(frame, (532, 300)) # !!! testing
@@ -48,6 +67,7 @@ class LineCrossCounter(InferenceModule):
             background_color=sv.Color.WHITE
         )
         return annotated_frame
+    
     
     def get_results(self) -> dict:   
         return {

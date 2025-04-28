@@ -13,6 +13,7 @@ def process_video_logic(source_path: str, target_path: str, inference_module: In
 
     # Get original video properties
     cap = cv2.VideoCapture(source_path)
+    inference_module.initialize_with_video(cap)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = cap.get(cv2.CAP_PROP_FPS)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))

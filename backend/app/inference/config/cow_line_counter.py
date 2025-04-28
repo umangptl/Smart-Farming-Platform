@@ -4,7 +4,7 @@ import supervision as sv
 import torch
 
 
-def get_cow_line_counter(line_start, line_end, triggering_anchors=None):
+def get_cow_line_counter(normalized_line_start, normalized_line_end, triggering_anchors=None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Load object detection model
@@ -47,14 +47,6 @@ def get_cow_line_counter(line_start, line_end, triggering_anchors=None):
             anchor_dict[anchor] for anchor in triggering_anchors
         ]
 
-    # Define virtual line counter
-    line_zone = sv.LineZone(
-        start=sv.Point(line_start["x"], line_start["y"]),
-        end=sv.Point(line_end["x"], line_end["y"]),
-        minimum_crossing_threshold=3,
-        **line_zone_kwargs
-    )
-
     # the class names we have chosen
     SELECTED_CLASS_NAMES = ["cow", "person"]
 
@@ -71,7 +63,8 @@ def get_cow_line_counter(line_start, line_end, triggering_anchors=None):
         trace_annotator=trace_annotator,
         box_annotator=box_annotator,
         label_annotator=label_annotator,
-        line_zone=line_zone,
+        normalized_start=normalized_line_start,
+        normalized_end=normalized_line_end,
         line_zone_annotator=line_zone_annotator,
         selected_class_ids=SELECTED_CLASS_IDS,
     )

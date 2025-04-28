@@ -13,3 +13,8 @@ class InferenceModule(ABC):
     @abstractmethod
     def get_results(self) -> dict:
         pass
+
+    def initialize_with_video(self, video_capture):
+        """Optional: Models may override if they need video-specific information."""
+        pass
+    

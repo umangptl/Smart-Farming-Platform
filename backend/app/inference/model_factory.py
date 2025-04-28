@@ -5,8 +5,8 @@ def build_model_from_config(config: dict):
     
     if model_name == "cow_line_count":
         return get_cow_line_counter(
-            line_start=config["line_start"],
-            line_end=config["line_end"],
+            normalized_line_start=config["line_start"],
+            normalized_line_end=config["line_end"],
             triggering_anchors=config.get("triggering_anchors")
         )
     
