@@ -49,8 +49,8 @@ def get_cow_line_counter(line_start, line_end, triggering_anchors=None):
 
     # Define virtual line counter
     line_zone = sv.LineZone(
-        start=sv.Point(*line_start),
-        end=sv.Point(*line_end),
+        start=sv.Point(line_start["x"], line_start["y"]),
+        end=sv.Point(line_end["x"], line_end["y"]),
         minimum_crossing_threshold=3,
         **line_zone_kwargs
     )
