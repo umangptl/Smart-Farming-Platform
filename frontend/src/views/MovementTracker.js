@@ -3,6 +3,7 @@ import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
 import VideoUpload from "../components/InferencePage/VideoUpload";
 import VideoSelector from "../components/InferencePage/VideoSelector";
 import FrameLineDrawer from "../components/InferencePage/FrameLineDrawer";
+import DirectionSelector from "components/InferencePage/DirectionSelector";
 import { uploadVideo, saveVideoConfig, fetchPreuploadedVideos, processVideo } from "../api/inferenceApi";
 
 const MovementTracker = () => {
@@ -12,6 +13,7 @@ const MovementTracker = () => {
     const [frameURL, setFrameURL] = useState("");
     const [lineStart, setLineStart] = useState(null);
     const [lineEnd, setLineEnd] = useState(null);
+    const [direction, setDirection] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [processedVideoURL, setProcessedVideoURL] = useState("");
 
@@ -77,8 +79,14 @@ const MovementTracker = () => {
     };
 
     const handleSaveConfig = async () => {
-        if (!lineStart || !lineEnd || !selectedVideoName) {
+        if (!lineStart || !lineEnd) {
             alert("Please draw a line first!");
+            return;
+        } else if (!direction) {
+            alert("Please select a direction for cow movement!");
+            return;
+        } else if (!selectedVideoName) {
+            alert("Please select a video!");
             return;
         }
 
@@ -87,7 +95,9 @@ const MovementTracker = () => {
                 model_name: "cow_line_count",
                 line_start: lineStart, 
                 line_end: lineEnd,
-                triggering_anchors: ["BOTTOM_LEFT", "BOTTOM_RIGHT"]};
+                direction: direction,
+                direction: direction,
+            };
             await saveVideoConfig(selectedVideoName, config);
             alert("Configuration saved! Now you can process the video.");
         } catch (error) {
@@ -140,6 +150,15 @@ const MovementTracker = () => {
                     <Button className="mt-3" variant="success" onClick={handleProcessVideo}>
                         Process Video
                     </Button>
+                </Col>
+            </Row>
+
+            {/* Section 3: Select direction of moving objects */}
+            <Row className="mb-5">
+                <Col>
+                    <DirectionSelector
+                        selectedDirection={direction} 
+                        onSelect={setDirection}/>
                 </Col>
             </Row>
 

@@ -58,28 +58,42 @@ const drawFancyLine = (ctx, start, end) => {
   // --- Draw start point with black border ---
   // Outer black circle (border)
   ctx.beginPath();
-  ctx.arc(start.x, start.y, 7, 0, 2 * Math.PI);
+  ctx.arc(start.x, start.y, 8, 0, 2 * Math.PI);
   ctx.fillStyle = "black";
   ctx.fill();
 
   // Inner red circle
   ctx.beginPath();
-  ctx.arc(start.x, start.y, 5, 0, 2 * Math.PI);
-  ctx.fillStyle = "red";
+  ctx.arc(start.x, start.y, 6, 0, 2 * Math.PI);
+  ctx.fillStyle = "white";
   ctx.fill();
+
+  // Draw "A" on start point
+  ctx.fillStyle = "black";
+  ctx.font = "bold 10px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("A", start.x, start.y);
 
   // --- Draw end point with black border ---
   // Outer black circle (border)
   ctx.beginPath();
-  ctx.arc(end.x, end.y, 7, 0, 2 * Math.PI);
+  ctx.arc(end.x, end.y, 8, 0, 2 * Math.PI);
   ctx.fillStyle = "black";
   ctx.fill();
 
   // Inner blue circle
   ctx.beginPath();
-  ctx.arc(end.x, end.y, 5, 0, 2 * Math.PI);
-  ctx.fillStyle = "blue";
+  ctx.arc(end.x, end.y, 6, 0, 2 * Math.PI);
+  ctx.fillStyle = "white";
   ctx.fill();
+
+  // Draw "B" on end point
+  ctx.fillStyle = "black";
+  ctx.font = "bold 10px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("B", end.x, end.y);
 };
 
 
@@ -134,23 +148,11 @@ const drawFancyLine = (ctx, start, end) => {
     const { x, y, canvas } = getCanvasCoordinates(e);
     const ctx = canvas.getContext("2d");
 
-    // const rect = canvas.getBoundingClientRect();
-    // const scaleX = canvas.width / rect.width;
-    // const scaleY = canvas.height / rect.height;
-    // const x = (e.clientX - rect.left) * scaleX;
-    // const y = (e.clientY - rect.top) * scaleY; 
-
     // Redraw image
     redrawCanvas();
 
     // Draw dynamic line
     drawFancyLine(ctx, startPoint, {x, y})
-    // ctx.beginPath();
-    // ctx.moveTo(startPoint.x, startPoint.y);
-    // ctx.lineTo(x, y);
-    // ctx.strokeStyle = "red";
-    // ctx.lineWidth = 2;
-    // ctx.stroke();
   };
 
   const redrawCanvas = () => {
