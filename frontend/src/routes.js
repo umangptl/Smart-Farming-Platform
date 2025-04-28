@@ -6,7 +6,7 @@ import Tasks from "views/Tasks";
 import Inventory from "views/Inventory";
 import Notifications from "views/Notifications.js";
 import User from "views/UserProfile";
-import ModelTestPage from "views/ModelTestPage";
+import MovementTracker from "views/MovementTracker";
 
 const dashboardRoutes = [
   {
@@ -66,12 +66,12 @@ const dashboardRoutes = [
     layout: "/admin",
   },
   {
-    path: "/ml_models",
-    name: "ML Models",
-    icon: "nc-icon nc-vector ",
-    component: ModelTestPage,
+    path: "/movement-tracker",
+    name: "Movement Tracker",
+    icon: "nc-icon nc-minimal-right",
+    component: MovementTracker,
     layout: "/admin",
-  },
+  }
 ];
 
 export default dashboardRoutes;

@@ -68,5 +68,5 @@ def get_cow_line_counter(normalized_line_start, normalized_line_end, triggering_
         line_zone_annotator=line_zone_annotator,
         line_zone_start=normalized_line_start,
         line_zone_end=normalized_line_end,
-        **optional_line_zone_kwargs
+        optional_line_zone_kwargs=optional_line_zone_kwargs,
     )
