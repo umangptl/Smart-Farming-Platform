@@ -2,8 +2,8 @@ from flask import Blueprint, request, jsonify, send_from_directory
 import os
 from werkzeug.utils import secure_filename
 from app.config import Config
-from app.video.processor import process_video_logic
-from app.repository.video_config_repository import save_config_for_video_inference, get_config_for_video_inference
+from app.video.processor import process_video_logic, process_stream_logic
+from app.repository.video_config_repository import save_config_for_video_inference, get_config_for_video_source
 from app.inference.model_factory import build_model_from_config
 
 video_bp = Blueprint("videos", __name__)
@@ -53,8 +53,8 @@ def configure_video():
 @video_bp.route("/process", methods=["POST"])
 def process():
     data = request.get_json()
-    video_name = data.get("video_name")
     
+    video_name = data.get("video_name")
     if not video_name:
         return jsonify({"error": "No video name provided"}), 400
     
@@ -63,7 +63,7 @@ def process():
     target_path = os.path.join(Config.RESULT_FOLDER, video_name)
     
     # Load saved config
-    config = get_config_for_video_inference(video_name)
+    config = get_config_for_video_source(video_name)
     if not config:
         return jsonify({"error": f"No config found for video '{video_name}'"}), 404
     
@@ -83,3 +83,33 @@ def process():
 @video_bp.route("/processed/<filename>", methods=["GET"])
 def get_processed_video(filename):
     return send_from_directory(Config.RESULT_FOLDER, filename)
+
+# Process Live Stream   
+@video_bp.route("/process_stream", methods=["POST"])
+def process_stream():
+    data = request.get_json()
+    
+    video_name = data.get("video_name")
+    if not video_name:
+        return jsonify({"error": "No video name provided"}), 400
+    
+    stream_url = data.get("stream_url")
+    if not stream_url:
+        return jsonify({"error": "No stream URL provided"}), 400
+    
+    # Load saved config
+    config = get_config_for_video_source(video_name)
+    if not config:
+        return jsonify({"error": f"No config found for video '{video_name}'"}), 404
+    
+    try:
+        # Build model and process
+        model = build_model_from_config(config)
+        results = process_stream_logic(stream_url, model, stride=1)
+
+        return jsonify({
+            "message": f"Stream '{stream_url}' processed successfully",
+            "results": results
+        })
+    except Exception as e:
+        return jsonify({"error": f"Failed to process stream: {str(e)}"}), 500

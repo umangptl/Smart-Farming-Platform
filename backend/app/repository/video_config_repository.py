@@ -3,7 +3,7 @@ import os
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "video_configs.json")
 
-def get_config_for_video_inference(video_name: str):
+def get_config_for_video_source(video_name: str):
     if not os.path.exists(CONFIG_PATH):
         return None
     with open(CONFIG_PATH, "r") as f:

@@ -8,7 +8,7 @@ def get_cow_line_counter(normalized_line_start, normalized_line_end, triggering_
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Load object detection model
-    model = YOLO("yolov8x.pt")
+    model = YOLO("yolov8.pt")
     model.to(device)
 
     # Setup Annotators
