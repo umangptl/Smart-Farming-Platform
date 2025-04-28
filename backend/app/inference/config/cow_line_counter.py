@@ -34,8 +34,9 @@ def get_cow_line_counter(normalized_line_start, normalized_line_end, triggering_
 
     byte_tracker.reset()
 
-    # Prepare optional kwargs
-    line_zone_kwargs = {}
+    # Prepare LineZone kwargs
+    optional_line_zone_kwargs = {}
+    optional_line_zone_kwargs['minimum_crossing_threshold'] = 3
     if triggering_anchors is not None:
         anchor_dict = {
             "TOP_LEFT": sv.Position.TOP_LEFT,
@@ -43,7 +44,7 @@ def get_cow_line_counter(normalized_line_start, normalized_line_end, triggering_
             "BOTTOM_LEFT": sv.Position.BOTTOM_LEFT,
             "BOTTOM_RIGHT": sv.Position.BOTTOM_RIGHT,
         }
-        line_zone_kwargs["triggering_anchors"] = [
+        optional_line_zone_kwargs["triggering_anchors"] = [
             anchor_dict[anchor] for anchor in triggering_anchors
         ]
 
@@ -60,11 +61,12 @@ def get_cow_line_counter(normalized_line_start, normalized_line_end, triggering_
     return LineCrossCounter(
         model=model,
         tracker=byte_tracker,
+        selected_class_ids=SELECTED_CLASS_IDS,
         trace_annotator=trace_annotator,
         box_annotator=box_annotator,
         label_annotator=label_annotator,
-        normalized_start=normalized_line_start,
-        normalized_end=normalized_line_end,
         line_zone_annotator=line_zone_annotator,
-        selected_class_ids=SELECTED_CLASS_IDS,
+        line_zone_start=normalized_line_start,
+        line_zone_end=normalized_line_end,
+        **optional_line_zone_kwargs
     )

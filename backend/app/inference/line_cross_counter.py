@@ -4,18 +4,18 @@ import numpy as np
 import cv2
 
 class LineCrossCounter(InferenceModule):
-    def __init__(self, model, tracker, trace_annotator, box_annotator, label_annotator, normalized_start, normalized_end, line_zone_annotator, selected_class_ids):
+    def __init__(self, model, tracker, trace_annotator, box_annotator, selected_class_ids, label_annotator, line_zone_start, line_zone_end, line_zone_annotator, optional_line_zone_kwargs):
         self.model = model
         self.byte_tracker = tracker
         self.trace_annotator = trace_annotator
         self.box_annotator = box_annotator
         self.label_annotator = label_annotator
-        self.normalized_start = normalized_start
-        self.normalized_end = normalized_end
-        self.line_zone = None
-        self.line_zone_annotator = line_zone_annotator
         self.selected_class_ids = selected_class_ids
-
+        self.line_zone = None
+        self.line_zone_start = line_zone_start
+        self.line_zone_end = line_zone_end
+        self.line_zone_annotator = line_zone_annotator
+        self.optional_line_zone_kwargs = optional_line_zone_kwargs or {}
 
     def name(self):
         return "line_cross_counter"
@@ -26,14 +26,14 @@ class LineCrossCounter(InferenceModule):
         height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         start = sv.Point(
-            self.normalized_start["x"] * width,
-            self.normalized_start["y"] * height,
+            self.line_zone_start["x"] * width,
+            self.line_zone_start["y"] * height,
         )
         end = sv.Point(
-            self.normalized_end["x"] * width,
-            self.normalized_end["y"] * height,
+            self.line_zone_end["x"] * width,
+            self.line_zone_end["y"] * height,
         )
-        self.line_zone = sv.LineZone(start=start, end=end)
+        self.line_zone = sv.LineZone(start=start, end=end, **self.optional_line_zone_kwargs)
 
 
     def detect_and_annotate_crossings(self, frame: np.ndarray) -> np.ndarray:
