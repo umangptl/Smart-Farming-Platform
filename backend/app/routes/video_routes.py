@@ -1,8 +1,10 @@
-from flask import Blueprint, request, jsonify, send_from_directory
+import threading
+import uuid
+from flask import Blueprint, Response, request, jsonify, send_from_directory
 import os
 from werkzeug.utils import secure_filename
 from app.config import Config
-from app.video.processor import process_video_logic, process_stream_logic
+from app.video.processor import process_video_logic, process_stream_logic, live_processed_frames
 from app.repository.video_config_repository import save_config_for_video_inference, get_config_for_video_source
 from app.inference.model_factory import build_model_from_config
 
@@ -50,7 +52,7 @@ def configure_video():
         return jsonify({"error": f"Failed to save config: {e}"}), 500
 
 # Process Video with ML Model API
-@video_bp.route("/process", methods=["POST"])
+@video_bp.route("/process_video", methods=["POST"])
 def process():
     data = request.get_json()
     
@@ -105,11 +107,36 @@ def process_stream():
     try:
         # Build model and process
         model = build_model_from_config(config)
-        results = process_stream_logic(stream_url, model, stride=1)
 
+        # Create unique ID for the stream
+        stream_id = str(uuid.uuid4())
+
+        # Start background processing
+        thread = threading.Thread(
+            target=process_stream_logic,
+            args=(stream_url, model, stream_id),
+            daemon=True
+        )
+        thread.start()
+
+        # Return the URL to access the processed feed
+        processed_feed_url = f"/api/videos/processed_feed/{stream_id}"
         return jsonify({
-            "message": f"Stream '{stream_url}' processed successfully",
-            "results": results
+            "message": f"Started processing stream '{stream_url}'",
+            "processed_stream_url": processed_feed_url
         })
+        
     except Exception as e:
         return jsonify({"error": f"Failed to process stream: {str(e)}"}), 500
+    
+    
+@video_bp.route("/processed_feed/<stream_id>", methods=["GET"])
+def processed_feed(stream_id):
+    def generate():
+        while True:
+            if stream_id in live_processed_frames:
+                frame = live_processed_frames[stream_id]
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')

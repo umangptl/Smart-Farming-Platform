@@ -3,8 +3,10 @@ from flask import Flask, Response
 import cv2
 import numpy as np
 import pyautogui
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 def generate_frames():
     while True:

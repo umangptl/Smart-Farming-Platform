@@ -56,7 +56,7 @@ export const saveVideoConfig = async (videoName, config) => {
 // Process video using the saved config
 export const processVideo = async (videoName) => {
   try {
-    const response = await fetch(`${VIDEO_API_URL}/process`, {
+    const response = await fetch(`${VIDEO_API_URL}/process_video`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ video_name: videoName }),
@@ -73,4 +73,22 @@ export const processVideo = async (videoName) => {
 // Fetch the processed video file
 export const fetchProcessedVideo = (filename) => {
   return `${VIDEO_API_URL}/processed/${filename}`;
+};
+
+
+// Process live stream using the given stream URL
+export const processStream = async (streamURL) => {
+  try {
+    const response = await fetch(`${VIDEO_API_URL}/process_stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stream_url: streamURL }),
+    });
+
+    if (!response.ok) throw new Error("Failed to process stream");
+
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
 };

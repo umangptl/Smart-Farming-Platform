@@ -4,6 +4,8 @@ import cv2
 from tqdm import tqdm
 from app.inference.base import InferenceModule
 
+# Store processed frames in memory
+live_processed_frames = {}
 
 def process_video_logic(source_path: str, target_path: str, inference_module: InferenceModule, stride: int = 1):
     """
@@ -37,7 +39,7 @@ def process_video_logic(source_path: str, target_path: str, inference_module: In
     writer.release()
     progress_bar.close()
 
-def process_stream_logic(stream_url: str, inference_module: InferenceModule, stride: int = 1):
+def process_stream_logic(stream_url: str, stream_id: str, inference_module: InferenceModule, stride: int = 1):
     """
     Processes a live stream using the provided inference module.
     Only processes every `stride`-th frame for performance.
@@ -51,28 +53,25 @@ def process_stream_logic(stream_url: str, inference_module: InferenceModule, str
     inference_module.initialize_with_video(cap)
 
     frame_idx = 0
-    progress_bar = tqdm(desc="Processing live stream", unit="frame")
+    print(f"[INFO] Started processing stream {stream_id}")
 
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("Stream ended or error occurred.")
+            print(f"[INFO] Stream {stream_id} ended or failed.")
             break
 
         if frame_idx % stride == 0:
             annotated = inference_module.detect_and_annotate_crossings(frame)
-            # Optional: display result
-            cv2.imshow('Inference on Stream', annotated)
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                print("Interrupted by user.")
-                break
+            # Encode the frame to JPEG for streaming
+            success, buffer = cv2.imencode('.jpg', annotated)
+            if success:
+                live_processed_frames[stream_id] = buffer.tobytes()
 
         frame_idx += 1
-        progress_bar.update(1)
 
     cap.release()
-    cv2.destroyAllWindows()
-    progress_bar.close()
+    print(f"[INFO] Stream {stream_id} processing ended.")
 
     return inference_module.get_results()

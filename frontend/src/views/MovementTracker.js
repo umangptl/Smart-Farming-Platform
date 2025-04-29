@@ -4,9 +4,10 @@ import VideoUpload from "../components/InferencePage/VideoUpload";
 import VideoSelector from "../components/InferencePage/VideoSelector";
 import FrameLineDrawer from "../components/InferencePage/FrameLineDrawer";
 import DirectionSelector from "components/InferencePage/DirectionSelector";
-import { uploadVideo, saveVideoConfig, fetchPreuploadedVideos, processVideo } from "../api/inferenceApi";
+import { uploadVideo, saveVideoConfig, fetchPreuploadedVideos, processVideo, processStream } from "../api/inferenceApi";
 
 const MovementTracker = () => {
+    const [streamURLInput, setStreamURLInput] = useState("");
     const [videoFile, setVideoFile] = useState(null);
     const [uploadedVideos, setUploadedVideos] = useState([]);
     const [selectedVideoName, setSelectedVideoName] = useState("");
@@ -16,32 +17,46 @@ const MovementTracker = () => {
     const [direction, setDirection] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [processedVideoURL, setProcessedVideoURL] = useState("");
+    const [streamPreviewLoaded, setStreamPreviewLoaded] = useState(false);
+
 
     useEffect(() => {
-        loadPreuploadedVideos();
     }, []);
-
-    const loadPreuploadedVideos = async () => {
-        try {
-            const videos = await fetchPreuploadedVideos();
-            setUploadedVideos(videos);
-        } catch (error) {
-            console.error("Failed to fetch preuploaded videos", error);
-        }
-    };
 
     const handleFileChange = (file) => {
         setVideoFile(file);
+        setStreamURLInput("");    // Clear stream URL if user picks a file
         const localVideoURL = URL.createObjectURL(file);
         extractFirstFrame(localVideoURL);
     };
 
-    const handleUpload = async () => {
+    const handleStreamURLChange = (e) => {
+        setStreamURLInput(e.target.value);
+        setVideoFile(null);       // Clear uploaded file
+        setSelectedVideoName(""); // Clear selected pre-uploaded video
+        setFrameURL("");          // Clear frame preview (cannot extract frame from stream easily)
+    };
+
+    const handleUploadVideo = async () => {
         try {
             const data = await uploadVideo(videoFile);
             setSelectedVideoName(data.video_name);
         } catch (error) {
             console.error("Video upload failed", error);
+        }
+    };
+
+    const handleLoadStream = async () => {
+        if (!streamURLInput) {
+            alert("Please enter a stream URL first!");
+            return;
+        }
+    
+        try {
+            setFrameURL(streamURLInput);
+            setStreamPreviewLoaded(true);
+        } catch (error) {
+            console.error("Failed to load stream preview", error);
         }
     };
 
@@ -106,19 +121,26 @@ const MovementTracker = () => {
     };
 
     const handleProcessVideo = async () => {
-        if (!selectedVideoName) {
-            alert("No video selected!");
+        if (!selectedVideoName && !streamURLInput) {
+            alert("No video selected or stream URL provided!");
             return;
         }
 
         try {
-            console.log(selectedVideoName)
             setIsProcessing(true);
-            const result = await processVideo(selectedVideoName);
-            console.log("Processing results:", result.results);
-            setProcessedVideoURL(fetchProcessedVideo(selectedVideoName)); // After processing, set processed video URL
+    
+            if (streamURLInput) {
+                // Processing a live stream
+                const result = await processStream(streamURLInput);
+                console.log("Processing stream results:", result.results);
+            } else {
+                // Processing uploaded video
+                const result = await processVideo(selectedVideoName);
+                console.log("Processing video results:", result.results);
+                setProcessedVideoURL(fetchProcessedVideo(selectedVideoName)); 
+            }
         } catch (error) {
-            console.error("Failed to process video", error.message);
+            console.error("Failed to process:", error.message);
         } finally {
             setIsProcessing(false);
         }
@@ -131,10 +153,26 @@ const MovementTracker = () => {
             {/* Section 1: Upload or Select */}
             <Row className="mb-5">
                 <Col md={6}>
-                    <VideoUpload onFileChange={handleFileChange} onUpload={handleUpload} />
+                    <VideoUpload 
+                        onFileChange={handleFileChange} 
+                        onUpload={handleUploadVideo}
+                        disabled={streamURLInput.length > 0}/>
                 </Col>
-                <Col md={6}>
-                    <VideoSelector uploadedVideos={uploadedVideos} onSelect={handleVideoSelect} />
+                <Col md={12}>
+                    <div>
+                        <label className="form-label">Or enter a Stream URL:</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            placeholder="http://10.0.0.252:5000/video_feed"
+                            value={streamURLInput}
+                            onChange={handleStreamURLChange}
+                            disabled={videoFile !== null}
+                        />
+                        <Button onClick={handleLoadStream} disabled={!streamURLInput}>
+                            Load Stream
+                        </Button>
+                    </div>
                 </Col>
             </Row>
 
