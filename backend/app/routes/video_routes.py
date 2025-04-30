@@ -4,6 +4,7 @@ from flask import Blueprint, Response, request, jsonify, send_from_directory
 import os
 from werkzeug.utils import secure_filename
 from app.config import Config
+<<<<<<< HEAD
 from app.video.processor import process_video_logic, process_stream_logic
 from app.repository.video_config_repository import (
     save_config_for_video_inference,
@@ -11,6 +12,12 @@ from app.repository.video_config_repository import (
 )
 from app.inference.model_factory import build_model_from_config
 from app.video.processor import live_processed_frames
+=======
+from app.video.processor import process_video_logic, process_stream_logic, live_processed_frames, stream_heartbeats, heartbeat_lock
+from app.repository.video_config_repository import save_config_for_video_inference, get_config_for_video_source
+from app.inference.model_factory import build_model_from_config
+import time
+>>>>>>> bcdc90dcec3093092b415ab7228f774d367cae4a
 
 video_bp = Blueprint("videos", __name__)
 
@@ -133,12 +140,17 @@ def process_stream():
         thread = threading.Thread(
             target=process_stream_logic,
             args=(stream_url, stream_id, model),
+<<<<<<< HEAD
             daemon=True,
+=======
+            daemon=True
+>>>>>>> bcdc90dcec3093092b415ab7228f774d367cae4a
         )
         thread.start()
 
         # Return the URL to access the processed feed
         processed_feed_url = f"/api/videos/processed_feed/{stream_id}"
+<<<<<<< HEAD
         return jsonify(
             {
                 "message": f"Started processing stream '{stream_url}'",
@@ -146,6 +158,14 @@ def process_stream():
             }
         )
 
+=======
+        return jsonify({
+            "message": f"Started processing stream '{stream_url}'",
+            "processed_stream_url": processed_feed_url,
+            "stream_id": stream_id
+        })
+        
+>>>>>>> bcdc90dcec3093092b415ab7228f774d367cae4a
     except Exception as e:
         return jsonify({"error": f"Failed to process stream: {str(e)}"}), 500
 
@@ -160,4 +180,15 @@ def processed_feed(stream_id):
                     b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
                 )
 
+<<<<<<< HEAD
     return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
+=======
+    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@video_bp.route("/heartbeat/<stream_id>", methods=["POST"])
+def heartbeat(stream_id):
+    with heartbeat_lock:
+        stream_heartbeats[stream_id] = time.time()
+    return {"status": "heartbeat received"}, 200
+>>>>>>> bcdc90dcec3093092b415ab7228f774d367cae4a
