@@ -367,7 +367,7 @@ const Weather = () => {
       <h3 style={{ textAlign: "center" }}>5 Days Forecast</h3>
       <Row style={{ alignItems: "center", flexDirection: "column" }}>
         {dailyData.map((dailyData, index) => (
-          <Col md="5">
+          <Col key={index} md="5">
             <Card>
               <Card.Body
                 style={{

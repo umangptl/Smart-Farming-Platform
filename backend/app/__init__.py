@@ -12,7 +12,7 @@ from .routes.task_routes import task_bp
 from .routes.user_routes import user_bp
 from .routes.weather_route import weather_bp
 from .routes.enums_routes import enums_bp
-# from .routes.ml_image_routes import ml_bp
+from .routes.OCR_routes import ocr_bp
 from .routes.video_routes import video_bp
 from .routes.surveillance_routes import surveillance_bp
 
@@ -38,7 +38,7 @@ def create_app():
     app.register_blueprint(user_bp)
     app.register_blueprint(weather_bp)
     app.register_blueprint(enums_bp)
-    # app.register_blueprint(ml_bp, url_prefix='/api/ml')
+    app.register_blueprint(ocr_bp)
     app.register_blueprint(video_bp, url_prefix='/api/videos')
     app.register_blueprint(surveillance_bp)
 

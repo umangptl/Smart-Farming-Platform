@@ -192,7 +192,6 @@ function Dashboard() {
             item.label ||
             item.status
         );
-        console.log("Legend array:", legend);
 
         setDonutData({ labels, series });
         setDonutLegend(legend);

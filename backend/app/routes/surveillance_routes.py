@@ -163,7 +163,7 @@ def start_stream():
 
     return jsonify({
         "stream_id": stream_id,
-        "hls_url": f"http://localhost:5000/hls/{stream_id}/stream.m3u8"
+        "hls_url": f"http://127.0.0.1:5000/hls/{stream_id}/stream.m3u8"
     }), 200
 
 @surveillance_bp.route('/stop_stream/<stream_id>', methods=['POST'])
