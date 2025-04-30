@@ -4,6 +4,12 @@ import cv2
 from tqdm import tqdm
 from app.inference.base import InferenceModule
 
+import time
+from threading import Lock
+
+stream_heartbeats = {}  # stream_id -> last_seen_timestamp
+heartbeat_lock = Lock()
+
 # Store processed frames in memory
 live_processed_frames = {}
 
@@ -57,6 +63,9 @@ def process_stream_logic(stream_url: str, stream_id: str, inference_module: Infe
 
     while True:
         ret, frame = cap.read()
+        if not is_stream_active(stream_id):
+            print(f"[INFO] No heartbeat for stream {stream_id}. Stopping.")
+            break
         if not ret:
             print(f"[INFO] Stream {stream_id} ended or failed.")
             break
@@ -75,3 +84,8 @@ def process_stream_logic(stream_url: str, stream_id: str, inference_module: Infe
     print(f"[INFO] Stream {stream_id} processing ended.")
 
     return inference_module.get_results()
+
+def is_stream_active(stream_id, timeout=10):
+    with heartbeat_lock:
+        last_seen = stream_heartbeats.get(stream_id, 0)
+    return time.time() - last_seen < timeout

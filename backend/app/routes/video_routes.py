@@ -4,9 +4,10 @@ from flask import Blueprint, Response, request, jsonify, send_from_directory
 import os
 from werkzeug.utils import secure_filename
 from app.config import Config
-from app.video.processor import process_video_logic, process_stream_logic, live_processed_frames
+from app.video.processor import process_video_logic, process_stream_logic, live_processed_frames, stream_heartbeats, heartbeat_lock
 from app.repository.video_config_repository import save_config_for_video_inference, get_config_for_video_source
 from app.inference.model_factory import build_model_from_config
+import time
 
 video_bp = Blueprint("videos", __name__)
 
@@ -114,7 +115,7 @@ def process_stream():
         # Start background processing
         thread = threading.Thread(
             target=process_stream_logic,
-            args=(stream_url, model, stream_id),
+            args=(stream_url, stream_id, model),
             daemon=True
         )
         thread.start()
@@ -123,7 +124,8 @@ def process_stream():
         processed_feed_url = f"/api/videos/processed_feed/{stream_id}"
         return jsonify({
             "message": f"Started processing stream '{stream_url}'",
-            "processed_stream_url": processed_feed_url
+            "processed_stream_url": processed_feed_url,
+            "stream_id": stream_id
         })
         
     except Exception as e:
@@ -140,3 +142,10 @@ def processed_feed(stream_id):
                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@video_bp.route("/heartbeat/<stream_id>", methods=["POST"])
+def heartbeat(stream_id):
+    with heartbeat_lock:
+        stream_heartbeats[stream_id] = time.time()
+    return {"status": "heartbeat received"}, 200
