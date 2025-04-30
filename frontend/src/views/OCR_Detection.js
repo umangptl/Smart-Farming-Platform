@@ -174,6 +174,7 @@ function OCR_Detection() {
         setTimeout(() => {
           fetchNextFrame(videoId, frameNum);
         }, 500);
+        setShowResult(true);
       }
     } catch (error) {
       console.error("Error fetching frame:", error);
@@ -334,11 +335,18 @@ function OCR_Detection() {
                     }}
                   >
                     <h5>Detection Result:</h5>
-                    {showResult && selected ? (
+
+                    {uploadMode && showResult ? (
+                      <p>
+                        ❗ Sorry, ear tags could not be clearly detected in this
+                        video. Please ensure the video is clear and properly
+                        framed.
+                      </p>
+                    ) : !uploadMode && showResult && selected ? (
                       <p>{selected.result}</p>
                     ) : (
                       <p style={{ color: "#999" }}>
-                        Result will appear after video ends or upload.
+                        Result will appear after video ends.
                       </p>
                     )}
                   </div>
