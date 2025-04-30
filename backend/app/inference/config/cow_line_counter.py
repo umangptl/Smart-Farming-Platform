@@ -4,11 +4,13 @@ import supervision as sv
 import torch
 
 
-def get_cow_line_counter(normalized_line_start, normalized_line_end, triggering_anchors=None):
+def get_cow_line_counter(
+    normalized_line_start, normalized_line_end, triggering_anchors=None
+):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Load object detection model
-    model = YOLO("yolov8.pt")
+    model = YOLO("yolov8m.pt")
     model.to(device)
 
     # Setup Annotators
@@ -36,7 +38,7 @@ def get_cow_line_counter(normalized_line_start, normalized_line_end, triggering_
 
     # Prepare LineZone kwargs
     optional_line_zone_kwargs = {}
-    optional_line_zone_kwargs['minimum_crossing_threshold'] = 3
+    optional_line_zone_kwargs["minimum_crossing_threshold"] = 2
     if triggering_anchors is not None:
         anchor_dict = {
             "TOP_LEFT": sv.Position.TOP_LEFT,
@@ -47,7 +49,7 @@ def get_cow_line_counter(normalized_line_start, normalized_line_end, triggering_
         optional_line_zone_kwargs["triggering_anchors"] = [
             anchor_dict[anchor] for anchor in triggering_anchors
         ]
-
+    optional_line_zone_kwargs["minimum_crossing_threshold"] = 6
     # the class names we have chosen
     SELECTED_CLASS_NAMES = ["cow", "person"]
 
