@@ -61,24 +61,22 @@ def process_stream_logic(
     Processes a live stream using the provided inference module.
     Only processes every `stride`-th frame for performance.
     """
-
     cap = cv2.VideoCapture(stream_url)
 
     if not cap.isOpened():
         raise Exception(f"Cannot open stream: {stream_url}")
 
-    print(inference_module.name())
     inference_module.initialize_with_video(cap)
 
     frame_idx = 0
     print(f"[INFO] Started processing stream {stream_id}")
-    counter = 0
 
+    stream_heartbeats[stream_id] = time.time()
+    isFirstFrame = True
     while True:
-        # counter = +1
-        # if counter % 1:
-        print(f"counter {counter}")
         ret, frame = cap.read()
+        if isFirstFrame:
+            print("Frame was read")
         if not is_stream_active(stream_id):
             print(f"[INFO] No heartbeat for stream {stream_id}. Stopping.")
             break
@@ -87,10 +85,18 @@ def process_stream_logic(
             break
 
         if frame_idx % stride == 0:
+            print("original frame shape: ", frame.shape)
+            frame = cv2.resize(frame, (852, 480))
+            print("resized frame shape: ", frame.shape)
             annotated = inference_module.detect_and_annotate_crossings(frame)
+            if isFirstFrame:
+                print("Annotated frame generated")
+                isFirstFrame = False
 
             # Encode the frame to JPEG for streaming
-            success, buffer = cv2.imencode(".jpg", annotated)
+            success, buffer = cv2.imencode(
+                ".jpg", annotated, [int(cv2.IMWRITE_JPEG_QUALITY), 60]
+            )
             if success:
                 live_processed_frames[stream_id] = buffer.tobytes()
 
@@ -100,11 +106,9 @@ def process_stream_logic(
     print(f"[INFO] Stream {stream_id} processing ended.")
 
     return inference_module.get_results()
-<<<<<<< HEAD
-=======
+
 
 def is_stream_active(stream_id, timeout=10):
     with heartbeat_lock:
         last_seen = stream_heartbeats.get(stream_id, 0)
     return time.time() - last_seen < timeout
->>>>>>> bcdc90dcec3093092b415ab7228f774d367cae4a

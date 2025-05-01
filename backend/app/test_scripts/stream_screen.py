@@ -8,6 +8,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+
 def generate_frames():
     while True:
         # Capture screen
@@ -20,18 +21,20 @@ def generate_frames():
         frame = cv2.resize(frame, (852, 480))
 
         # Encode frame as JPEG
-        _, buffer = cv2.imencode('.jpg', frame)
+        _, buffer = cv2.imencode(".jpg", frame)
         frame = buffer.tobytes()
 
         # Streaming bytes
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
 
-@app.route('/video_feed')
+
+@app.route("/video_feed")
 def video_feed():
-    return Response(generate_frames(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(
+        generate_frames(), mimetype="multipart/x-mixed-replace; boundary=frame"
+    )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Important: host='0.0.0.0' to allow Laptop GPU to connect
-    app.run(host='0.0.0.0', port=5000, threaded=True)
+    app.run(host="0.0.0.0", port=5050, threaded=True)

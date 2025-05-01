@@ -11,6 +11,7 @@ def get_cow_line_counter(
 
     # Load object detection model
     model = YOLO("yolov8m.pt")
+    print("YOLO model loaded")
     model.to(device)
 
     # Setup Annotators
