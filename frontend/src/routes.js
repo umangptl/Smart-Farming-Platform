@@ -6,70 +6,70 @@ import Tasks from "views/Tasks";
 import Inventory from "views/Inventory";
 import Notifications from "views/Notifications.js";
 import User from "views/UserProfile";
-import ModelTestPage from "views/ModelTestPage";
+import MovementTracker from "views/MovementTracker";
 
 const dashboardRoutes = [
   {
     path: "/dashboard",
     name: "Dashboard",
-    icon: "nc-icon nc-chart-pie-35",
+    icon: "fas fa-chart-pie",
     component: Dashboard,
     layout: "/admin",
   },
   {
     path: "/surveillance",
     name: "Surveillance",
-    icon: "nc-icon nc-cctv",
+    icon: "fas fa-video",
     component: Surveillance,
     layout: "/admin",
   },
   {
     path: "/OCR_Detection",
-    name: "OCR_Detection",
-    icon: "nc-icon nc-camera-20",
+    name: "OCR Detection",
+    icon: "fas fa-camera",
     component: OCR_Detection,
+    layout: "/admin",
+  },
+  {
+    path: "/movement-tracker",
+    name: "Movement Tracker",
+    icon: "far fa-eye",
+    component: MovementTracker,
     layout: "/admin",
   },
   {
     path: "/weather",
     name: "Weather",
-    icon: "nc-icon nc-sun-fog-29",
+    icon: "fas fa-cloud-sun",
     component: Weather,
     layout: "/admin",
   },
   {
     path: "/tasks",
     name: "Tasks",
-    icon: "nc-icon nc-notes",
+    icon: "fas fa-tasks",
     component: Tasks,
     layout: "/admin",
   },
   {
     path: "/inventory",
     name: "Inventory",
-    icon: "nc-icon nc-grid-45",
+    icon: "fas fa-boxes",
     component: Inventory,
     layout: "/admin",
   },
   {
     path: "/user",
     name: "User",
-    icon: "nc-icon nc-circle-09",
+    icon: "fas fa-user",
     component: User,
     layout: "/admin",
   },
   {
     path: "/notifications",
     name: "Notifications",
-    icon: "nc-icon nc-bell-55",
+    icon: "fas fa-bell",
     component: Notifications,
-    layout: "/admin",
-  },
-  {
-    path: "/ml_models",
-    name: "ML Models",
-    icon: "nc-icon nc-vector ",
-    component: ModelTestPage,
     layout: "/admin",
   },
 ];

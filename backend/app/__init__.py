@@ -27,7 +27,7 @@ def create_app():
     
     # Ensure necessary directories exist
     os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)  # Creates "uploads/" if it doesn't exist
-    os.makedirs(Config.STATIC_FOLDER, exist_ok=True)  # Creates "static/" if it doesn't exist
+    os.makedirs(Config.RESULT_FOLDER, exist_ok=True)  # Creates "static/" if it doesn't exist
 
     # Register Blueprints
     app.register_blueprint(task_bp)
