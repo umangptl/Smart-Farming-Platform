@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { Dropdown, Modal, Button, Form } from "react-bootstrap";
+import { API_BASE_URL } from "../config.js";
 
 // Function to sort tasks by priority
 const sortByPriority = (tasks) => {
@@ -30,7 +31,7 @@ function TaskManager() {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:5000/tasks");
+        const response = await axios.get(`${API_BASE_URL}/tasks`);
         const tasks = response.data;
 
         // Group tasks by their status
@@ -81,7 +82,7 @@ function TaskManager() {
     });
 
     try {
-      await axios.put(`http://127.0.0.1:5000/tasks/${movedTask.id}`, {
+      await axios.put(`${API_BASE_URL}/tasks/${movedTask.id}`, {
         status: movedTask.status,
       });
     } catch (error) {
@@ -92,7 +93,7 @@ function TaskManager() {
   // Handle task deletion
   const deleteTask = async (taskId) => {
     try {
-      await axios.delete(`http://127.0.0.1:5000/tasks/${taskId}`);
+      await axios.delete(`${API_BASE_URL}/tasks/${taskId}`);
       const updatedColumns = { ...columns };
       Object.keys(updatedColumns).forEach((status) => {
         updatedColumns[status] = updatedColumns[status].filter(
@@ -123,7 +124,7 @@ function TaskManager() {
       const updatedTask = { ...editingTask, ...newTask };
       try {
         await axios.put(
-          `http://127.0.0.1:5000/tasks/${editingTask.id}`,
+          `${API_BASE_URL}/tasks/${editingTask.id}`,
           updatedTask
         );
 
@@ -147,7 +148,7 @@ function TaskManager() {
       const task = { ...newTask, status: "Pending" };
 
       try {
-        const response = await axios.post("http://127.0.0.1:5000/tasks", task);
+        const response = await axios.post(`${API_BASE_URL}/tasks`, task);
         setColumns((prev) => ({
           ...prev,
           Pending: [...prev.Pending, response.data],
