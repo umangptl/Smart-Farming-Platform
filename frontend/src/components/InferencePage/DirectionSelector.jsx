@@ -15,7 +15,7 @@ const directions = [
 export default function DirectionSelector({selectedDirection, onSelect }) {
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 60px)", gap: "10px" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", width: "100%" }}>
       {directions.map((dir) => (
         <button
           key={dir.label}

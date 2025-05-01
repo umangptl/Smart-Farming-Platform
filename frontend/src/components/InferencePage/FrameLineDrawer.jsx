@@ -6,13 +6,14 @@ const FrameLineDrawer = ({ frameURL, onLineDrawn }) => {
   const [startPoint, setStartPoint] = useState(null);
   const [endPoint, setEndPoint] = useState(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const previewURL = `${frameURL}?preview=1`
 
   useEffect(() => {
-    if (!frameURL) return;
+    if (!previewURL) return;
 
     const img = new Image();
-    img.src = frameURL;
-    img.crossOrigin = "anonymous";
+    img.src = previewURL;
+    // img.crossOrigin = "anonymous";
     img.onload = () => {
       const canvas = canvasRef.current;
       canvas.width = img.width;
@@ -22,7 +23,7 @@ const FrameLineDrawer = ({ frameURL, onLineDrawn }) => {
     };
 
     imageRef.current = img;
-  }, [frameURL]);
+  }, [previewURL]);
 
   const getCanvasCoordinates = (e) => {
     const canvas = canvasRef.current;

@@ -77,12 +77,15 @@ export const fetchProcessedVideo = (filename) => {
 
 
 // Process live stream using the given stream URL
-export const processStream = async (streamURL) => {
+export const processStream = async (streamURL, videoName) => {
   try {
     const response = await fetch(`${VIDEO_API_URL}/process_stream`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ stream_url: streamURL }),
+      body: JSON.stringify({ 
+        stream_url: streamURL,
+        video_name: videoName 
+      }),
     });
 
     if (!response.ok) throw new Error("Failed to process stream");
