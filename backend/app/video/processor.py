@@ -85,9 +85,7 @@ def process_stream_logic(
             break
 
         if frame_idx % stride == 0:
-            print("original frame shape: ", frame.shape)
             frame = cv2.resize(frame, (852, 480))
-            print("resized frame shape: ", frame.shape)
             annotated = inference_module.detect_and_annotate_crossings(frame)
             if isFirstFrame:
                 print("Annotated frame generated")
