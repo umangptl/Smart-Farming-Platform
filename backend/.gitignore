@@ -36,10 +36,6 @@ migrations/
 *.tar.gz
 *.whl
 
-# Ignore all files created during Docker build (if applicable)
-Dockerfile*
-docker-compose.yml
-
 # Ignore uploaded and processed files
 app/results/
 app/uploads/
