@@ -16,3 +16,5 @@ flask_jwt_extended
 dotenv
 psycopg2-binary
 opencv-python
+roboflow
+supervision
