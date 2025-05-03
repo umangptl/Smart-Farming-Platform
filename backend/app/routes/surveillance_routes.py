@@ -6,63 +6,25 @@ import subprocess
 import threading
 from flask import jsonify, send_from_directory, Blueprint, request, abort
 from ultralytics import YOLO
+
+from app.services.classify_behaviour import classify_behavior
 from app.utils.db_util import db
 from app.models.stream import Stream
+from app.config import Config
 
 surveillance_bp = Blueprint('surveillance', __name__)
 
 active_streams = {}
 
-# Use YOLOv8 object detection model (not pose model)
 model = YOLO("yolov8n.pt")
 
-OUTPUT_DIR = "hls_streams"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(Config.OUTPUT_DIR, exist_ok=True)
 
 
-def classify_behavior(bbox, frame_height):
-    """
-    Classifies the behavior of an animal based on its bounding box properties.
-    :param bbox: (x1, y1, x2, y2) Bounding box coordinates
-    :param frame_height: Height of the video frame
-    :return: "Standing" or "Lying Down", otherwise None (no "Unknown" label)
-    """
-    x1, y1, x2, y2 = bbox
-    height = y2 - y1
-    width = x2 - x1
+def process_video(video_path, streamid):
+    os.makedirs(Config.HLS_FOLDER, exist_ok=True)
 
-    aspect_ratio = height / width  # Ratio of height to width
-
-    lying_threshold = aspect_ratio < 0.8  # Lying animals are wider than they are tall
-
-    if lying_threshold and y2 > frame_height * 0.85:
-        return "Lying Down"
-    else:
-        return "Standing"
-
-
-def process_video(video_path, stream_id):
-    hls_folder = os.path.join(OUTPUT_DIR, stream_id)
-    os.makedirs(hls_folder, exist_ok=True)
-
-    ffmpeg_command = [
-        "ffmpeg",
-        "-y",
-        "-f", "rawvideo",
-        "-pix_fmt", "bgr24",
-        "-s", "640x480",
-        "-r", "20",
-        "-i", "-",
-        "-c:v", "libx264",
-        "-preset", "ultrafast",
-        "-g", "30",
-        "-hls_time", "2",
-        "-hls_list_size", "5",
-        "-f", "hls",
-        os.path.join(hls_folder, "stream.m3u8"),
-    ]
-
-    ffmpeg_process = subprocess.Popen(ffmpeg_command, stdin=subprocess.PIPE)
+    ffmpeg_process = subprocess.Popen(Config.FFMPEG_CONFIG, stdin=subprocess.PIPE)
 
     cap = cv2.VideoCapture(video_path)
 
@@ -114,6 +76,7 @@ def process_video(video_path, stream_id):
     ffmpeg_process.stdin.close()
     ffmpeg_process.wait()
 
+
 @surveillance_bp.route('/stream', methods=['GET'])
 def get_streams():
     try:
@@ -121,6 +84,7 @@ def get_streams():
         return jsonify([stream.to_dict() for stream in streams]), 200
     except Exception as e:
         return jsonify({"error": f"Failed to fetch streams: {str(e)}"}), 500
+
 
 @surveillance_bp.route('/stream', methods=['POST'])
 def create_task():
@@ -136,6 +100,7 @@ def create_task():
     except Exception as e:
         return jsonify({"error": f"Failed to create stream: {str(e)}"}), 500
 
+
 @surveillance_bp.route("/start_stream", methods=["POST"])
 def start_stream():
     data = request.get_json() or {}
@@ -143,28 +108,27 @@ def start_stream():
     if not video_url:
         return jsonify({"error": "No video URL provided"}), 400
 
-    stream_id = data.get("stream_id") or f"stream"
-
     threading.Thread(
         target=process_video,
-        args=(video_url, stream_id),
+        args=(video_url, "/tmp/video.mp4"),
         daemon=True
     ).start()
 
     # Register as active
-    active_streams[stream_id] = {
+    active_streams["stream"] = {
         "video_url": video_url,
-        "hls_url": f"/hls/{stream_id}/stream.m3u8"
+        "hls_url": f"/hls/stream/stream.m3u8"
     }
 
-    plist = os.path.join(OUTPUT_DIR, stream_id, "stream.m3u8")
+    plist = os.path.join(Config.OUTPUT_DIR, "stream", "stream.m3u8")
     while not os.path.exists(plist):
         time.sleep(0.2)
 
     return jsonify({
-        "stream_id": stream_id,
-        "hls_url": f"http://localhost:5000/hls/{stream_id}/stream.m3u8"
+        "stream_id": "stream",
+        "hls_url": f"http://localhost:5000/hls/stream/stream.m3u8"
     }), 200
+
 
 @surveillance_bp.route('/stop_stream/<stream_id>', methods=['POST'])
 def stop_stream(stream_id):
@@ -177,7 +141,7 @@ def stop_stream(stream_id):
         proc.wait(timeout=5)
     info['status'] = 'stopped'
     # Delete HLS files
-    folder = os.path.join(OUTPUT_DIR, stream_id)
+    folder = os.path.join(Config.OUTPUT_DIR, stream_id)
     if os.path.isdir(folder):
         shutil.rmtree(folder)
     return jsonify({"success": True, "status": info['status']}), 200
@@ -198,5 +162,5 @@ def delete_stream(stream_id):
 
 @surveillance_bp.route('/hls/<stream_id>/<path:filename>', methods=["GET"])
 def serve_hls(stream_id, filename):
-    directory = os.path.abspath(os.path.join(OUTPUT_DIR, stream_id))
+    directory = os.path.abspath(os.path.join(Config.OUTPUT_DIR, stream_id))
     return send_from_directory(directory, filename)

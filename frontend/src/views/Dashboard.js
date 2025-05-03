@@ -3,6 +3,8 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 import ChartistGraph from "react-chartist";
 import { Card, Container, Row, Col, Form } from "react-bootstrap";
+import apiClient from "../api/APIClient"
+
 
 function Dashboard() {
   const [temperature, setTemperature] = useState(null);
@@ -61,7 +63,7 @@ function Dashboard() {
 
     const fetchTasks = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:5000/tasks/dashboard");
+        const res = await apiClient.get("/tasks/dashboard");
         setTaskProgress(res.data.progress);
       } catch (err) {
         console.error("Failed to fetch tasks:", err);

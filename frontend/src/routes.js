@@ -7,6 +7,8 @@ import Inventory from "views/Inventory";
 import Notifications from "views/Notifications.js";
 import User from "views/UserProfile";
 import ModelTestPage from "views/ModelTestPage";
+import Register from "views/Register";
+import Login from "views/Login";
 
 const dashboardRoutes = [
   {
@@ -71,6 +73,20 @@ const dashboardRoutes = [
     icon: "nc-icon nc-vector ",
     component: ModelTestPage,
     layout: "/admin",
+  },
+  {
+    path: "/register",
+    name: "User Registration",
+    icon: "nc-icon nc-vector ",
+    component: Register,
+    layout: "/auth",
+  },
+  {
+    path: "/login",
+    name: "Login",
+    icon: "nc-icon nc-vector ",
+    component: Login,
+    layout: "/auth",
   },
 ];
 
