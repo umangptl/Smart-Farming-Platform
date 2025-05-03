@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import ChartistGraph from "react-chartist";
 import { Card, Container, Row, Col, Form } from "react-bootstrap";
 import apiClient from "../api/APIClient"
-
+import { API_BASE_URL } from "../config.js";
 
 function Dashboard() {
   const [temperature, setTemperature] = useState(null);
@@ -51,7 +51,7 @@ function Dashboard() {
   useEffect(() => {
     const fetchTemperature = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:5000/dashboard");
+        const res = await axios.get(`${API_BASE_URL}/dashboard`);
         setTemperature(res.data.temperature);
       } catch (err) {
         console.error("Failed to fetch temperature", err);
@@ -63,7 +63,7 @@ function Dashboard() {
 
     const fetchTasks = async () => {
       try {
-        const res = await apiClient.get("/tasks/dashboard");
+        const res = await axios.get(`${API_BASE_URL}/tasks/dashboard`);
         setTaskProgress(res.data.progress);
       } catch (err) {
         console.error("Failed to fetch tasks:", err);
@@ -74,7 +74,7 @@ function Dashboard() {
     const fetchLivestock = async () => {
       try {
         const res = await axios.get(
-          "http://127.0.0.1:5000/livestock/dashboard"
+          `${API_BASE_URL}/livestock/dashboard`
         );
         setLivestockCount(res.data.total_livestock);
       } catch (err) {
@@ -86,7 +86,7 @@ function Dashboard() {
     const fetchLivestockByType = async () => {
       try {
         const response = await axios.get(
-          "http://127.0.0.1:5000/livestock/dashboard/type"
+          `${API_BASE_URL}/livestock/dashboard/type`
         );
 
         const typeCounts = response.data;
@@ -107,7 +107,7 @@ function Dashboard() {
     const fetchPurchaseTrend = async () => {
       try {
         const res = await axios.get(
-          "http://127.0.0.1:5000/livestock/dashboard/purchase_trend"
+          `${API_BASE_URL}/livestock/dashboard/purchase_trend`
         );
         const raw = res.data;
 
@@ -146,7 +146,7 @@ function Dashboard() {
     const fetchHealthStatus = async () => {
       try {
         const res = await axios.get(
-          "http://127.0.0.1:5000/livestock/dashboard/health-status"
+          `${API_BASE_URL}/livestock/dashboard/health-status`
         );
         const raw = res.data;
 
@@ -174,9 +174,9 @@ function Dashboard() {
       let url = "";
 
       if (type === "breeding") {
-        url = "http://127.0.0.1:5000/livestock/dashboard/breeding-status";
+        url = `${API_BASE_URL}/livestock/dashboard/breeding-status`;
       } else {
-        url = `http://127.0.0.1:5000/livestock/dashboard/breeds?type=${type}`;
+        url = `${API_BASE_URL}/livestock/dashboard/breeds?type=${type}`;
       }
 
       try {
@@ -194,7 +194,6 @@ function Dashboard() {
             item.label ||
             item.status
         );
-        console.log("Legend array:", legend);
 
         setDonutData({ labels, series });
         setDonutLegend(legend);

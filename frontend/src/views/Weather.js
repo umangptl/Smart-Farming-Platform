@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { Button } from "react-bootstrap";
+import { API_BASE_URL } from "../config.js";
 import "leaflet/dist/leaflet.css";
 
 // react-bootstrap components
@@ -59,7 +60,7 @@ const Weather = () => {
     try {
       // Fetch weather data
       const response = await fetch(
-        `http://127.0.0.1:5000/weather${queryParams}`
+        `${API_BASE_URL}/weather${queryParams}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch weather data.");
@@ -82,7 +83,7 @@ const Weather = () => {
     try {
       // Include the selected layer in the queryParams
       const response = await fetch(
-        `http://127.0.0.1:5000/temperature-map${queryParams}`
+        `${API_BASE_URL}/temperature-map${queryParams}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch map data.");
@@ -99,7 +100,7 @@ const Weather = () => {
     try {
       // Include the selected layer in the queryParams
       const response = await fetch(
-        `http://127.0.0.1:5000/hourly-forecast${queryParams}`
+        `${API_BASE_URL}/hourly-forecast${queryParams}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch hourly data.");
@@ -116,7 +117,7 @@ const Weather = () => {
     try {
       // Include the selected layer in the queryParams
       const response = await fetch(
-        `http://127.0.0.1:5000/daily-forecast${queryParams}`
+        `${API_BASE_URL}/daily-forecast${queryParams}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch hourly data.");
@@ -367,7 +368,7 @@ const Weather = () => {
       <h3 style={{ textAlign: "center" }}>5 Days Forecast</h3>
       <Row style={{ alignItems: "center", flexDirection: "column" }}>
         {dailyData.map((dailyData, index) => (
-          <Col md="5">
+          <Col key={index} md="5">
             <Card>
               <Card.Body
                 style={{

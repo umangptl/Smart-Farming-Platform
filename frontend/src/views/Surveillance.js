@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Card, Row, Col, Button, Modal, Form, Spinner } from "react-bootstrap";
 import LiveStream from "./LiveStream";
+import { API_BASE_URL } from "../config.js";
+
+const STREAM_API_URL = `${API_BASE_URL}/stream`;
 
 function Surveillance() {
   const [streams, setStreams] = useState([]);
@@ -15,7 +18,7 @@ function Surveillance() {
 
   const fetchStreams = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:5000/stream");
+      const res = await fetch(STREAM_API_URL);
       const data = await res.json();
       setStreams(data);
     } catch (err) {
@@ -31,7 +34,7 @@ function Surveillance() {
 
   const handleAdd = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:5000/stream", {
+      const res = await fetch(STREAM_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newName.trim(), url: newUrl.trim() }),
@@ -48,7 +51,7 @@ function Surveillance() {
 
   const handleDelete = async (id) => {
     try {
-      await fetch(`http://127.0.0.1:5000/stream/${id}`, { method: "DELETE" });
+      await fetch(`${STREAM_API_URL}/${id}`, { method: "DELETE" });
       setStreams((prev) => prev.filter((s) => s.id !== id));
     } catch (err) {
       console.error("Failed to delete stream", err);
@@ -65,7 +68,7 @@ function Surveillance() {
   const handleStartStream = async () => {
     if (!selectedStream) return;
     try {
-      const res = await fetch("http://127.0.0.1:5000/start_stream", {
+      const res = await fetch(`${API_BASE_URL}/start_stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: selectedStream.url }),
@@ -85,7 +88,7 @@ function Surveillance() {
   const handleCloseView = () => {
     // stop streaming on modal close
     if (isStreaming && selectedStream) {
-      fetch(`http://127.0.0.1:5000/stop_stream/stream`, {
+      fetch(`${API_BASE_URL}/stop_stream/stream`, {
         method: "POST",
       }).catch((err) => console.error("Failed to stop stream", err));
     }

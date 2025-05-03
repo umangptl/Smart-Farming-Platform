@@ -126,7 +126,7 @@ def start_stream():
 
     return jsonify({
         "stream_id": "stream",
-        "hls_url": f"http://localhost:5000/hls/stream/stream.m3u8"
+        "hls_url": f"http://127.0.0.1:5000/hls/stream/stream.m3u8"
     }), 200
 
 

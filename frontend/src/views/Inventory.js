@@ -537,7 +537,9 @@ function TableList() {
                 onChange={handleInputChange}
               >
                 {enums.genderOptions.map((gender) => (
-                  <option value={gender}>{gender}</option>
+                  <option key={gender} value={gender}>
+                    {gender}
+                  </option>
                 ))}
               </Form.Control>
             </Form.Group>
