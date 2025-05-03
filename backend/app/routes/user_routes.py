@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.models.users import User
 from app.utils.db_util import db
@@ -15,15 +16,18 @@ def get_users():
         return jsonify({"error": f"Failed to fetch users: {str(e)}"}), 500
 
 
-@user_bp.route('/users/<int:user_id>', methods=['GET'])
-def get_user(user_id):
+@user_bp.route('/users/details', methods=['GET'])
+@jwt_required()
+def get_user_details():
     try:
+        user_id = get_jwt_identity()  # Extract user ID from token
         user = User.query.get(user_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
         return jsonify(user.to_dict())
     except Exception as e:
         return jsonify({"error": f"Failed to fetch user: {str(e)}"}), 500
+
 
 
 @user_bp.route('/users/<int:user_id>', methods=['PUT'])

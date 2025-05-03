@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Card, Row, Col, Button, Modal, Form, Spinner } from "react-bootstrap";
 import LiveStream from "./LiveStream";
 import { API_BASE_URL } from "../config.js";
+import Cows_Thumbnail from "../assets/img/survellience/Cows_Thumbnails.png";
+import Pigs_Thumbnail from "../assets/img/survellience/Pigs_Thumbnails.png";
+import Sheeps_Thumbnail from "../assets/img/survellience/Sheeps_Thumbnails.png";
+import Cows_Sheeps_Thumbnail from "../assets/img/survellience/Cows_Sheeps_Thumbnails.png";
 
 const STREAM_API_URL = `${API_BASE_URL}/stream`;
 
@@ -15,6 +19,7 @@ function Surveillance() {
   const [newUrl, setNewUrl] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [hlsUrl, setHlsUrl] = useState("");
+  const thumbnails = [Sheeps_Thumbnail, Cows_Thumbnail, Pigs_Thumbnail, Cows_Sheeps_Thumbnail];
 
   const fetchStreams = async () => {
     try {
@@ -113,9 +118,10 @@ function Surveillance() {
             <Spinner animation="border" />
           </Col>
         ) : (
-          streams.map((stream) => (
+          streams.map((stream, index) => (
             <Col md={4} key={stream.id} className="mb-4">
               <Card>
+                <Card.Img variant="top" src={thumbnails[index % thumbnails.length]} />
                 <Card.Body>
                   <Card.Title>{stream.name}</Card.Title>
                   <div className="d-flex justify-content-end">

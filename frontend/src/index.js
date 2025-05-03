@@ -13,6 +13,7 @@ import AdminLayout from "layouts/Admin.js";
 import Auth from "layouts/Auth.js";
 import { EnumsProvider } from "./context/EnumsContext";
 import { AuthProvider } from "components/Authentication/AuthProvider";
+import ProtectedRoute from "components/Authentication/ProtectedRoutes";
 
 
 ReactDOM.render(
@@ -20,7 +21,7 @@ ReactDOM.render(
     <BrowserRouter>
       <AuthProvider>
         <Switch>
-          <Route path="/admin" render={(props) => <AdminLayout {...props} />} />
+          <ProtectedRoute path="/admin" component={AdminLayout} />
           <Route path="/auth" component={Auth} />
           <Redirect from="/" to="/admin/dashboard" />
         </Switch>
