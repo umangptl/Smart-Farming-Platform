@@ -37,7 +37,7 @@ def create_app():
     def check_if_token_revoked(jwt_header, jwt_payload):
         return TokenBlocklist.query.filter_by(jti=jwt_payload['jti']).first() is not None
 
-    CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
     # Ensure necessary directories exist
     os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)  # Creates "uploads/" if it doesn't exist
