@@ -25,6 +25,7 @@ function TaskManager() {
     title: "",
     description: "",
     priority: "Low",
+    status: "Pending",
   });
 
   // Fetch tasks from the backend
@@ -113,6 +114,8 @@ function TaskManager() {
       title: task.title,
       description: task.description,
       priority: task.priority,
+      status: task.status,
+
     });
     setShowModal(true);
   };
@@ -309,6 +312,19 @@ function TaskManager() {
                 <option value="Low">Low</option>
                 <option value="Medium">Medium</option>
                 <option value="High">High</option>
+              </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Status</Form.Label>
+              <Form.Select
+                value={newTask.status}
+                onChange={(e) =>
+                  setNewTask((prev) => ({ ...prev, status: e.target.value }))
+                }
+              >
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
               </Form.Select>
             </Form.Group>
           </Form>

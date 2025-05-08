@@ -1,15 +1,17 @@
 import React, { useContext } from 'react';
 import { Route, Redirect } from 'react-router-dom';
-import { AuthContext } from './AuthProvider'; // Adjust the path if needed
+import { AuthContext } from './AuthProvider';
 
-const ProtectedRoute = ({ component: Component, ...rest }) => {
-  const { isAuthenticated } = useContext(AuthContext);
+function ProtectedRoute({ component: Component, ...rest }) {
+  const { isAuthenticated, loading } = useContext(AuthContext);
 
   return (
     <Route
       {...rest}
       render={(props) =>
-        isAuthenticated ? (
+        loading ? (
+          <div className="text-center mt-5">Loading...</div>
+        ) : isAuthenticated ? (
           <Component {...props} />
         ) : (
           <Redirect to="/auth/login" />
@@ -17,6 +19,6 @@ const ProtectedRoute = ({ component: Component, ...rest }) => {
       }
     />
   );
-};
+}
 
 export default ProtectedRoute;

@@ -4,6 +4,7 @@ from flask_cors import CORS
 from app.utils.db_util import configure_db
 from app.config import Config
 from .routes.auth_routes import auth_bp
+from .routes.notif_routes import notification_bp
 from .routes.task_routes import task_bp
 from .routes.livestock_routes import livestock_bp
 from .routes.location_routes import location_bp
@@ -37,7 +38,7 @@ def create_app():
     def check_if_token_revoked(jwt_header, jwt_payload):
         return TokenBlocklist.query.filter_by(jti=jwt_payload['jti']).first() is not None
 
-    CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
     # Ensure necessary directories exist
     os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)  # Creates "uploads/" if it doesn't exist
@@ -56,5 +57,5 @@ def create_app():
     app.register_blueprint(video_bp, url_prefix='/api/videos')
     app.register_blueprint(surveillance_bp)
     app.register_blueprint(auth_bp)
-
+    app.register_blueprint(notification_bp)
     return app

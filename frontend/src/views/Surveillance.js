@@ -18,6 +18,7 @@ function Surveillance() {
   const [newName, setNewName] = useState("");
   const [newUrl, setNewUrl] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [streamLoading, setStreamLoading] = useState(false);
   const [hlsUrl, setHlsUrl] = useState("");
   const thumbnails = [Sheeps_Thumbnail, Cows_Thumbnail, Pigs_Thumbnail, Cows_Sheeps_Thumbnail];
 
@@ -67,12 +68,14 @@ function Surveillance() {
     setSelectedStream(stream);
     setShowViewModal(true);
     setIsStreaming(false);
+    setStreamLoading(false);
     setHlsUrl("");
   };
 
   const handleStartStream = async () => {
     if (!selectedStream) return;
     try {
+      setStreamLoading(true);
       const res = await fetch(`${API_BASE_URL}/start_stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -83,12 +86,10 @@ function Surveillance() {
       setIsStreaming(true);
     } catch (err) {
       console.error("Failed to start stream", err);
+    } finally {
+      setStreamLoading(false);
     }
   };
-
-  function timeout(delay) {
-    return new Promise( res => setTimeout(res, delay) );
-  }
 
   const handleCloseView = () => {
     // stop streaming on modal close
@@ -201,11 +202,19 @@ function Surveillance() {
         </Modal.Header>
         <Modal.Body>
           <div className="d-flex justify-content-end mb-3">
-            {!isStreaming && (
+            {!isStreaming && !streamLoading && (
               <Button onClick={handleStartStream}>Start Stream</Button>
             )}
           </div>
-          {hlsUrl && <LiveStream url={hlsUrl} />}
+
+          {streamLoading && (
+            <div className="text-center my-4">
+              <Spinner animation="border" />
+              <div className="mt-2">Loading Stream...</div>
+            </div>
+          )}
+
+          {hlsUrl && !streamLoading && <LiveStream url={hlsUrl} />}
         </Modal.Body>
       </Modal>
     </>

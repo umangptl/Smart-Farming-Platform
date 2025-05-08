@@ -37,35 +37,27 @@ def process_video(video_path, streamid):
 
         results = model(frame)  # Run YOLO object detection
 
-        # Animal Counter
-        animal_counter = {"cow": 0, "horse": 0, "sheep": 0, "goat": 0, "pigs": 0}
-
         for r in results:
+            intrusion_detected = False  # Reset for each frame
+
             for i in range(len(r.boxes)):
-                box = r.boxes[i].xyxy[0].cpu().numpy()  # Bounding box
-                conf = r.boxes[i].conf[0].item()  # Confidence
-                cls = int(r.boxes[i].cls[0].item())  # Class index
-                label = model.names[cls]  # Get class name
+                box = r.boxes[i].xyxy[0].cpu().numpy()
+                conf = r.boxes[i].conf[0].item()
+                cls = int(r.boxes[i].cls[0].item())
+                label = model.names[cls]
 
-                if label in animal_counter:
-                    animal_counter[label] += 1
-
-                # Determine behavior based on bbox position
-                behavior = classify_behavior(box, frame.shape[0])
+                if label.lower() == "person":
+                    intrusion_detected = True
 
                 x1, y1, x2, y2 = map(int, box)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                cv2.putText(frame, f"{label} ({conf:.2f})", (x1, y1 - 10),
+                            cv2.FONT_HERSHEY_PLAIN, 0.5, (0, 0, 255), 2)
 
-                # Draw bounding box
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(frame, f"{label} - {behavior} ({conf:.2f})", (x1, y1 - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
-        # Format animal count
-        count_text = " | ".join([f"{animal}: {count}" for animal, count in animal_counter.items()])
-
-        # Display animal count
-        cv2.putText(frame, count_text, (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            # Show label only if person is detected in this frame
+            if intrusion_detected:
+                cv2.putText(frame, "Intrusion Detected !!", (10, 30),
+                            cv2.FONT_HERSHEY_PLAIN, 0.8, (0, 0, 255), 3)
 
         try:
             ffmpeg_process.stdin.write(frame.tobytes())

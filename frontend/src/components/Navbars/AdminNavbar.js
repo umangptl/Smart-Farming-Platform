@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { Navbar, Container, Nav, Dropdown, Button } from "react-bootstrap";
 import routes from "routes.js";
@@ -8,6 +8,7 @@ function Header() {
   const location = useLocation();
   const isAuthPage = location.pathname.startsWith("/auth");
   const { logout } = useContext(AuthContext);
+  const [notifications, setNotifications] = useState([]);
 
   const mobileSidebarToggle = (e) => {
     e.preventDefault();
@@ -31,6 +32,20 @@ function Header() {
     }
     return "HERD VISION";
   };
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/notifications/recent");
+        const data = await res.json();
+        setNotifications(data);
+      } catch (err) {
+        console.error("Failed to fetch notifications:", err);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
 
   return (
     <Navbar bg="light" expand="lg">
@@ -84,25 +99,44 @@ function Header() {
                     className="m-0"
                   >
                     <i className="nc-icon nc-notification-70"></i>
-                    <span className="notification">5</span>
-                    <span className="d-lg-none ml-1">Notification</span>
+                    <span className="notification">{notifications.length}</span>
+                    <span className="d-lg-none ml-1">Notifications</span>
                   </Dropdown.Toggle>
-                  <Dropdown.Menu>
-                    <Dropdown.Item onClick={(e) => e.preventDefault()}>
-                      Notification 1
-                    </Dropdown.Item>
-                    <Dropdown.Item onClick={(e) => e.preventDefault()}>
-                      Notification 2
-                    </Dropdown.Item>
-                    <Dropdown.Item onClick={(e) => e.preventDefault()}>
-                      Notification 3
-                    </Dropdown.Item>
-                    <Dropdown.Item onClick={(e) => e.preventDefault()}>
-                      Notification 4
-                    </Dropdown.Item>
-                    <Dropdown.Item onClick={(e) => e.preventDefault()}>
-                      Another notification
-                    </Dropdown.Item>
+                  <Dropdown.Menu
+                    align="end"
+                    style={{
+                      minWidth: "350px",
+                      maxWidth: "400px",
+                      maxHeight: "300px",
+                      overflowY: "auto",
+                      padding: "10px",
+                      borderRadius: "8px",
+                      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                      position: "absolute",
+                      right: 0,
+                      left: "auto",
+                      zIndex: 1050,
+                    }}
+                  >
+                    {notifications.length === 0 ? (
+                      <div className="text-muted px-2 py-1">No new notifications</div>
+                    ) : (
+                      notifications.map((notif) => (
+                        <Dropdown.Item
+                          key={notif.id}
+                          onClick={(e) => e.preventDefault()}
+                          style={{
+                            whiteSpace: "normal",
+                            fontSize: "0.95rem",
+                            lineHeight: "1.4",
+                            padding: "10px 12px",
+                            borderBottom: "1px solid #eee",
+                          }}
+                        >
+                          {notif.note}
+                        </Dropdown.Item>
+                      ))
+                    )}
                   </Dropdown.Menu>
                 </Dropdown>
 
@@ -116,7 +150,7 @@ function Header() {
                   <Nav.Link
                     className="m-0"
                     onClick={logout}
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: "pointer" }}
                   >
                     <span className="no-icon">Log out</span>
                   </Nav.Link>

@@ -7,6 +7,7 @@ export function AuthProvider({ children }) {
   const history = useHistory();
   const [accessToken, setAccessToken] = useState(null);
   const [refreshToken, setRefreshToken] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const a = localStorage.getItem('access_token');
@@ -15,6 +16,7 @@ export function AuthProvider({ children }) {
       setAccessToken(a);
       setRefreshToken(r);
     }
+    setLoading(false);
   }, []);
 
   async function register(formData) {
@@ -67,7 +69,17 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ accessToken, refreshToken, register, login, logout, isAuthenticated: !!accessToken }}>
+    <AuthContext.Provider
+      value={{
+        accessToken,
+        refreshToken,
+        register,
+        login,
+        logout,
+        isAuthenticated: !!accessToken,
+        loading, // Expose loading state
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
