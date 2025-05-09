@@ -1,12 +1,12 @@
 import os
 from datetime import timedelta
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class Config:
-    UPLOAD_FOLDER = os.path.join(os.getcwd(), "app/uploads")
+    UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
-    RESULT_FOLDER = os.path.join(os.getcwd(), "app/results")
+    RESULT_FOLDER = os.path.join(BASE_DIR, "results")
     IMAGE_MODELS = {
         'parking_detector': {
             'type':'local',

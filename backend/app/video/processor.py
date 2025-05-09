@@ -7,6 +7,17 @@ from app.inference.base import InferenceModule
 import time
 from threading import Lock
 
+import subprocess
+
+def reencode_for_browser(input_path, output_path):
+    subprocess.run([
+        "ffmpeg", "-y", "-i", input_path,
+        "-vcodec", "libx264",
+        "-acodec", "aac",
+        "-movflags", "+faststart",
+        output_path
+    ], check=True)
+
 stream_heartbeats = {}  # stream_id -> last_seen_timestamp
 heartbeat_lock = Lock()
 
@@ -33,10 +44,12 @@ def process_video_logic(
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     cap.release()
+    
+    temp_target_path = target_path.replace(".mp4", "_temp.mp4")
 
     # Setup VideoWriter for saving output
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    writer = cv2.VideoWriter(target_path, fourcc, fps / stride, (width, height))
+    writer = cv2.VideoWriter(temp_target_path, fourcc, fps / stride, (width, height))
 
     # Setup progress bar
     estimated_processed_frames = total_frames // stride
@@ -51,6 +64,7 @@ def process_video_logic(
         progress_bar.update(1)
 
     writer.release()
+    reencode_for_browser(temp_target_path, target_path)
     progress_bar.close()
 
 
