@@ -3,7 +3,7 @@ import { Container, Row, Col, Button, Spinner, Card, InputGroup, Form } from "re
 import VideoUpload from "../components/InferencePage/VideoUpload";
 import FrameLineDrawer from "../components/InferencePage/FrameLineDrawer";
 import DirectionSelector from "components/InferencePage/DirectionSelector";
-import { uploadVideo, saveVideoConfig, fetchPreuploadedVideos, processVideo, processStream } from "../api/inferenceApi";
+import { uploadVideo, saveVideoConfig, fetchProcessedVideo, processVideo, processStream } from "../api/inferenceApi";
 import { API_BASE_URL } from "config";
 
 const MovementTracker = () => {
@@ -59,6 +59,8 @@ const MovementTracker = () => {
         try {
             const data = await uploadVideo(videoFile);
             setSelectedVideoName(data.video_name);
+            const localVideoURL = URL.createObjectURL(videoFile);
+            extractFirstFrame(localVideoURL);
         } catch (error) {
             console.error("Video upload failed", error);
         }

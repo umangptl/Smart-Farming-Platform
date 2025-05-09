@@ -6,7 +6,8 @@ const FrameLineDrawer = ({ frameURL, onLineDrawn }) => {
   const [startPoint, setStartPoint] = useState(null);
   const [endPoint, setEndPoint] = useState(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const previewURL = `${frameURL}?preview=1`
+  const previewURL = frameURL.startsWith("data:") ? frameURL : `${frameURL}?preview=1`;
+  // const previewURL = `${frameURL}?preview=1`
 
   useEffect(() => {
     if (!previewURL) return;
