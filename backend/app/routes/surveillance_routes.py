@@ -52,12 +52,12 @@ def process_video(video_path, streamid):
                 x1, y1, x2, y2 = map(int, box)
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
                 cv2.putText(frame, f"{label} ({conf:.2f})", (x1, y1 - 10),
-                            cv2.FONT_HERSHEY_PLAIN, 0.5, (0, 0, 255), 2)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
             # Show label only if person is detected in this frame
             if intrusion_detected:
                 cv2.putText(frame, "Intrusion Detected !!", (10, 30),
-                            cv2.FONT_HERSHEY_PLAIN, 0.8, (0, 0, 255), 3)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
         try:
             ffmpeg_process.stdin.write(frame.tobytes())
